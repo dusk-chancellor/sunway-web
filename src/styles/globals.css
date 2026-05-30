@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Sunway design tokens — lifted verbatim from brand.css into the Tailwind v4
+   theme. These generate utilities: bg-navy, text-yellow, border-line,
+   rounded-r-lg, shadow-brand, font-display, etc. Never hardcode hex in JSX.
+   (Tailwind v4 is CSS-first — see DECISIONS.md for why there is no
+   tailwind.config.ts.)
+   ========================================================================== */
+@theme {
+  --color-yellow: #ffd400;
+  --color-yellow-deep: #f5c800;
+  --color-navy: #0f1860;
+  --color-navy-2: #1a2380;
+  --color-ink: #0f1860;
+  --color-muted: #5b5e78;
+  --color-line: #e7e8ee;
+  --color-card: #f4f4f4;
+  --color-card-2: #eeeff3;
+  --color-bg: #ffffff;
+  --color-ok: #2eae5a;
+  --color-warn: #e2a100;
+  --color-bad: #d9434a;
+
+  /* soft status fills used by badges in the mockups */
+  --color-ok-soft: #e6f6ec;
+  --color-warn-soft: #fff6cc;
+  --color-bad-soft: #fbe3e4;
+  --color-navy-soft: #e2e5fa;
+
+  --radius-r-sm: 10px;
+  --radius-r-md: 14px;
+  --radius-r-lg: 20px;
+  --radius-r-xl: 28px;
+
+  --shadow-brand: 0 4px 18px rgba(15, 24, 96, 0.06);
+  --shadow-brand-2: 0 8px 28px rgba(15, 24, 96, 0.1);
+
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ============================================================================
+   Base
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Visible, accessible focus ring on every interactive element (WCAG 2.4.7). */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* The signature Sunway hairline (yellow + navy ticks). */
+.hairline {
+  height: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--color-yellow) 0 18%,
+    var(--color-navy) 18% 22%,
+    #fff 22% 24%,
+    var(--color-navy) 24% 28%,
+    #fff 28% 100%
+  );
+}
+
+/* Striped image placeholder, matching the mockups' .ph blocks. */
+.ph {
+  position: relative;
+  background: repeating-linear-gradient(135deg, #e1e2e8 0 8px, #d6d7dd 8px 16px);
+  overflow: hidden;
+}
+
+/* Honour reduced-motion globally. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility: clamp text to N lines. */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
