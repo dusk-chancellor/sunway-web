@@ -54,7 +54,7 @@ export function ProductCard({ product }: { product: Product }) {
         </Link>
         <div className="mt-auto flex items-end justify-between gap-2 pt-1">
           <div>
-            <Money minor={product.priceMinor} className="font-display text-lg font-semibold text-navy" />
+            <Money minor={product.priceMinor} currency={product.currency} className="font-display text-lg font-semibold text-navy" />
             {lowStock && <p className="text-xs text-warn">{t("lowStock", { count: product.stockQty })}</p>}
           </div>
           <Button

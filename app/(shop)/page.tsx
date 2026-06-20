@@ -1,22 +1,23 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight } from "lucide-react";
-import { listBanners, listCategories, listProducts } from "@/server/store";
-import { productSchema, categorySchema, bannerSchema } from "@/lib/validation/schemas";
-import { z } from "zod";
+import { fetchBanners, fetchCategories, fetchProducts } from "@/lib/api/resources/catalog";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { ProductImage } from "@/components/shared/ProductImage";
 
-// SSR: read the data layer directly on the server (no self-fetch), so the home
-// page is fully rendered for SEO and first paint.
+// SSR: fetch from the Go API on the server so the home page is fully rendered
+// for SEO and first paint.
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const t = await getTranslations("home");
 
-  const banners = z.array(bannerSchema).parse(listBanners(true));
-  const categories = z.array(categorySchema).parse(listCategories({ featured: true }));
-  const featured = z.array(productSchema).parse(listProducts({ featured: true, pageSize: 8 }).items);
+  const [banners, categories, productList] = await Promise.all([
+    fetchBanners(),
+    fetchCategories(true),
+    fetchProducts({ featured: true }),
+  ]);
+  const featured = productList.items.slice(0, 8);
   const hero = banners[0];
 
   return (
@@ -27,7 +28,7 @@ export default async function HomePage() {
           <div className="grid items-center gap-6 p-8 md:grid-cols-2 md:p-12">
             <div className="flex flex-col gap-4">
               <span className="w-fit rounded-full bg-yellow px-3 py-1 text-xs font-semibold text-navy">SUNWAY</span>
-              <h1 className="font-display text-3xl font-bold leading-tight md:text-5xl">{hero.title}</h1>
+              <h1 className="font-display text-3xl font-bold leading-tight text-white md:text-5xl">{hero.title}</h1>
               <p className="max-w-md text-white/80">{hero.subtitle}</p>
               <Link
                 href={hero.ctaHref}

@@ -42,47 +42,52 @@
 }
 
 /* ============================================================================
-   Base
+   Base — kept inside @layer base so Tailwind utility classes (text-white,
+   text-navy, bg-navy, …) always win over these element defaults. Without the
+   layer these unlayered rules would override utilities, e.g. `a { color:
+   inherit }` would beat `text-white` and make navy buttons invisible.
    ========================================================================== */
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-}
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
 
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-display);
-  color: var(--color-ink);
-  letter-spacing: -0.02em;
-  margin: 0;
-}
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-img {
-  max-width: 100%;
-  display: block;
-}
+  img {
+    max-width: 100%;
+    display: block;
+  }
 
-/* Visible, accessible focus ring on every interactive element (WCAG 2.4.7). */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-navy);
-  outline-offset: 2px;
-  border-radius: 4px;
+  /* Visible, accessible focus ring on every interactive element (WCAG 2.4.7). */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-navy);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 /* The signature Sunway hairline (yellow + navy ticks). */

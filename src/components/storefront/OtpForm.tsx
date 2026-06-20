@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { requestOtp } from "@/lib/api/resources/auth";
+import { updateProfile } from "@/lib/api/resources/me";
 import { ServerError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Input } from "@/components/ui/Input";
@@ -17,10 +18,10 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/account/profile";
-  const { login } = useAuth();
+  const { login, setUser } = useAuth();
   const pushToast = useUI((s) => s.pushToast);
 
-  const [step, setStep] = useState<"phone" | "code">("phone");
+  const [step, setStep] = useState<"phone" | "code" | "name">("phone");
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
   const [consent, setConsent] = useState(false);
@@ -62,11 +63,36 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
     if (!e164) return;
     setBusy(true);
     try {
-      await login(e164, code, mode === "register" ? fullName : undefined);
+      const user = await login(e164, code, mode === "register" ? fullName : undefined);
+      // Every account must have a name. If this is a first-time sign-in without
+      // one, collect it now before continuing.
+      if (!user.fullName.trim()) {
+        setStep("name");
+        return;
+      }
       pushToast("Signed in", "ok");
       router.push(next);
     } catch (err) {
       setError(err instanceof ServerError ? err.message : "Verification failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitName = async () => {
+    setError(null);
+    if (fullName.trim().length < 2) {
+      setError("Please enter your name");
+      return;
+    }
+    setBusy(true);
+    try {
+      const updated = await updateProfile({ fullName: fullName.trim() });
+      setUser(updated);
+      pushToast("Welcome to Sunway", "ok");
+      router.push(next);
+    } catch (err) {
+      setError(err instanceof ServerError ? err.message : "Could not save your name");
     } finally {
       setBusy(false);
     }
@@ -78,7 +104,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
       <p className="mt-2 text-sm text-muted">{mode === "login" ? t("loginSubtitle") : t("registerSubtitle")}</p>
 
       <div className="mt-6 space-y-4">
-        {step === "phone" ? (
+        {step === "phone" && (
           <>
             {mode === "register" && (
               <Input label={t("fullName")} name="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -99,7 +125,8 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
               {busy ? t("sending") : t("sendCode")}
             </Button>
           </>
-        ) : (
+        )}
+        {step === "code" && (
           <>
             <p className="text-sm text-muted">{t("codeSubtitle", { phone: formatAsYouType(phone) })}</p>
             <Input
@@ -124,6 +151,22 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
                 {cooldown > 0 ? t("resendIn", { seconds: cooldown }) : t("resend")}
               </button>
             </div>
+          </>
+        )}
+        {step === "name" && (
+          <>
+            <p className="text-sm text-muted">{t("namePrompt")}</p>
+            <Input
+              label={t("fullName")}
+              name="fullName"
+              placeholder="Your name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              error={error ?? undefined}
+            />
+            <Button block disabled={busy || fullName.trim().length < 2} onClick={submitName}>
+              {busy ? t("saving") : t("continue")}
+            </Button>
           </>
         )}
       </div>

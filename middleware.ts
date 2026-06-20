@@ -3,7 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // Lightweight edge gate. The presence of the httpOnly session cookie is a cheap
 // signal; full role checks happen server-side in the API (requireAdmin) and in
 // client layouts. Routes that require auth redirect guests to the right place.
-const SESSION_COOKIE = "sunway_session";
+// Matches the Go backend's refresh cookie (set on login). Same registrable
+// host (localhost) so it is visible to the Next middleware on navigation.
+const SESSION_COOKIE = "sw_refresh";
 
 const PROTECTED_PREFIXES = ["/checkout", "/account"];
 

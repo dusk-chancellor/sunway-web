@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CreditCard, Banknote, Plus } from "lucide-react";
@@ -19,9 +20,22 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { cn } from "@/lib/utils/cn";
 import type { PaymentMethod } from "@/lib/validation/schemas";
 
+/** Group digits into 4s: "1234567812345678" → "1234 5678 1234 5678" (max 16). */
+function formatCardNumber(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 16);
+  return digits.replace(/(.{4})/g, "$1 ").trim();
+}
+/** Auto-insert the slash: "0131" → "01/31" (max MM/YY). */
+function formatExpiry(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
 export function CheckoutView() {
   const t = useTranslations("checkout");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const pushToast = useUI((s) => s.pushToast);
   const { user } = useAuth();
   const { data: cart } = useCart();
@@ -65,7 +79,8 @@ export function CheckoutView() {
     Boolean(selectedAddress) &&
     Boolean(selectedShipping) &&
     Boolean(cart && cart.items.length > 0) &&
-    (payment === "cod" || (card.number.length >= 12 && card.name && card.expiry && card.cvv));
+    (payment === "cod" ||
+      (card.number.replace(/\s/g, "").length >= 12 && card.name && card.expiry.length === 5 && card.cvv.length >= 3));
 
   const submitAddress = async () => {
     const created = await saveAddress.mutateAsync({
@@ -77,7 +92,6 @@ export function CheckoutView() {
         street: form.street,
         apartment: form.apartment || undefined,
         postalCode: form.postalCode || undefined,
-        isDefault: !addresses?.length,
       },
     });
     setSelectedAddress(created.id);
@@ -94,6 +108,10 @@ export function CheckoutView() {
         { shippingAddressId: selectedAddress, shippingMethodId: selectedShipping, paymentMethod: payment },
         idemKey.current,
       );
+      // The backend emptied the cart in the checkout tx — drop the stale cache so
+      // the header badge and cart page reflect it immediately.
+      queryClient.setQueryData(["cart"], { items: [], subtotalMinor: 0n, currency: cart?.currency ?? "UZS", count: 0 });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
       router.push(`/orders/${order.number}/confirmation`);
     } catch (err) {
       if (err instanceof ServerError && err.code === "STOCK_CONFLICT") {
@@ -209,11 +227,11 @@ export function CheckoutView() {
 
             {payment === "card" ? (
               <div className="space-y-3">
-                <Input label={t("cardNumber")} name="cardNumber" inputMode="numeric" placeholder="0000 0000 0000 0000" value={card.number} onChange={(e) => setCard({ ...card, number: e.target.value })} />
-                <Input label={t("cardName")} name="cardName" value={card.name} onChange={(e) => setCard({ ...card, name: e.target.value })} />
+                <Input label={t("cardNumber")} name="cardNumber" inputMode="numeric" autoComplete="cc-number" placeholder="1234 5678 9123 4567" value={card.number} onChange={(e) => setCard({ ...card, number: formatCardNumber(e.target.value) })} />
+                <Input label={t("cardName")} name="cardName" autoComplete="cc-name" value={card.name} onChange={(e) => setCard({ ...card, name: e.target.value })} />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input label={t("cardExpiry")} name="cardExpiry" placeholder="MM/YY" value={card.expiry} onChange={(e) => setCard({ ...card, expiry: e.target.value })} />
-                  <Input label={t("cardCvv")} name="cardCvv" inputMode="numeric" placeholder="123" value={card.cvv} onChange={(e) => setCard({ ...card, cvv: e.target.value })} />
+                  <Input label={t("cardExpiry")} name="cardExpiry" inputMode="numeric" autoComplete="cc-exp" placeholder="01/31" value={card.expiry} onChange={(e) => setCard({ ...card, expiry: formatExpiry(e.target.value) })} />
+                  <Input label={t("cardCvv")} name="cardCvv" inputMode="numeric" autoComplete="cc-csc" placeholder="123" value={card.cvv} onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) })} />
                 </div>
                 <p className="rounded-r-md bg-warn-soft px-3 py-2 text-xs text-[#8a6a00]">{t("cardNotice")}</p>
               </div>

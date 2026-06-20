@@ -31,6 +31,7 @@ export interface ProductUpsert {
   name: string;
   description: string;
   priceMinor: string;
+  currency: "UZS" | "USD";
   stockQty: number;
   categoryId: string;
   isActive: boolean;

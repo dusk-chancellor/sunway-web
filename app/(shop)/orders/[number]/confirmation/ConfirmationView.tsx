@@ -33,8 +33,14 @@ export function ConfirmationView({ number }: { number: string }) {
             <p className="font-mono text-lg font-semibold text-navy">{order.number}</p>
           </div>
           <div className="flex gap-2">
-            <OrderStatusBadge status={order.status} />
-            <PaymentStatusBadge status={order.paymentStatus} />
+            <span className="flex flex-col items-end gap-1">
+              <span className="text-[10px] uppercase tracking-wide text-muted">{t("orderStatusLabel")}</span>
+              <OrderStatusBadge status={order.status} />
+            </span>
+            <span className="flex flex-col items-end gap-1">
+              <span className="text-[10px] uppercase tracking-wide text-muted">{t("paymentStatusLabel")}</span>
+              <PaymentStatusBadge status={order.paymentStatus} />
+            </span>
           </div>
         </div>
 
@@ -53,14 +59,14 @@ export function ConfirmationView({ number }: { number: string }) {
           {order.items.map((it) => (
             <li key={it.id} className="flex items-center justify-between py-3 text-sm">
               <span className="text-navy">{it.quantity}× {it.productName}</span>
-              <Money minor={it.lineTotalMinor} className="text-navy" />
+              <Money minor={it.lineTotalMinor} currency={order.currency} className="text-navy" />
             </li>
           ))}
         </ul>
         <div className="mt-4 space-y-1 border-t border-line pt-4 text-sm">
-          <div className="flex justify-between"><span className="text-muted">Subtotal</span><Money minor={order.subtotalMinor} className="text-navy" /></div>
-          <div className="flex justify-between"><span className="text-muted">Shipping ({order.shippingMethodName})</span><Money minor={order.shippingMinor} className="text-navy" /></div>
-          <div className="flex justify-between text-base font-semibold"><span className="text-navy">Total</span><Money minor={order.totalMinor} className="text-navy" /></div>
+          <div className="flex justify-between"><span className="text-muted">Subtotal</span><Money minor={order.subtotalMinor} currency={order.currency} className="text-navy" /></div>
+          <div className="flex justify-between"><span className="text-muted">Shipping ({order.shippingMethodName})</span><Money minor={order.shippingMinor} currency={order.currency} className="text-navy" /></div>
+          <div className="flex justify-between text-base font-semibold"><span className="text-navy">Total</span><Money minor={order.totalMinor} currency={order.currency} className="text-navy" /></div>
         </div>
       </div>
 

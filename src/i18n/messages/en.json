@@ -138,7 +138,9 @@
     "continueShopping": "Continue shopping",
     "viewAllOrders": "View all orders",
     "retryPayment": "Retry payment",
-    "checkAgain": "Check status again"
+    "checkAgain": "Check status again",
+    "orderStatusLabel": "Order status",
+    "paymentStatusLabel": "Payment"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -154,6 +156,9 @@
     "code": "One-time code",
     "verify": "Verify",
     "verifying": "Verifying…",
+    "namePrompt": "Almost done — what should we call you?",
+    "saving": "Saving…",
+    "continue": "Continue",
     "resend": "Resend code",
     "resendIn": "Resend in {seconds}s",
     "changeNumber": "Change phone number",
@@ -199,7 +204,9 @@
     "cancelled": "Cancelled",
     "items": "Items",
     "shippingAddress": "Shipping address",
-    "total": "Total"
+    "total": "Total",
+    "orderStatusLabel": "Order status",
+    "paymentStatusLabel": "Payment"
   },
   "status": {
     "pending": "Pending",

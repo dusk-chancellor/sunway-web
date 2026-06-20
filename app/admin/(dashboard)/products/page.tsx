@@ -19,13 +19,14 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 interface FormState {
   name: string;
   description: string;
-  priceSom: string; // shown in so'm; converted to tiyin on save
+  price: string; // major units of the chosen currency; converted to minor on save
+  currency: "UZS" | "USD";
   stockQty: string;
   categoryId: string;
   isActive: boolean;
 }
 
-const EMPTY: FormState = { name: "", description: "", priceSom: "", stockQty: "0", categoryId: "", isActive: true };
+const EMPTY: FormState = { name: "", description: "", price: "", currency: "UZS", stockQty: "0", categoryId: "", isActive: true };
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
@@ -53,7 +54,8 @@ export default function AdminProductsPage() {
     setForm({
       name: p.name,
       description: p.description,
-      priceSom: String(p.priceMinor / 100n),
+      price: String(p.priceMinor / 100n),
+      currency: p.currency,
       stockQty: String(p.stockQty),
       categoryId: p.categoryId,
       isActive: p.isActive,
@@ -67,17 +69,18 @@ export default function AdminProductsPage() {
   }
 
   function submit() {
-    const som = Number(form.priceSom);
+    const price = Number(form.price);
     const stock = Number(form.stockQty);
     if (!form.name.trim()) return setError("Name is required.");
     if (!form.categoryId) return setError("Pick a category.");
-    if (!Number.isFinite(som) || som < 0) return setError("Price must be a positive number.");
+    if (!Number.isFinite(price) || price < 0) return setError("Price must be a positive number.");
     if (!Number.isInteger(stock) || stock < 0) return setError("Stock must be a non-negative integer.");
 
     const input: ProductUpsert = {
       name: form.name.trim(),
       description: form.description.trim(),
-      priceMinor: String(BigInt(Math.round(som)) * 100n),
+      priceMinor: String(BigInt(Math.round(price)) * 100n),
+      currency: form.currency,
       stockQty: stock,
       categoryId: form.categoryId,
       isActive: form.isActive,
@@ -172,8 +175,12 @@ export default function AdminProductsPage() {
               className="w-full rounded-r-md border border-line bg-white px-3 py-2 text-sm text-navy outline-none focus-visible:ring-2 focus-visible:ring-navy/40"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Price (so'm)" inputMode="numeric" value={form.priceSom} onChange={(e) => setForm({ ...form, priceSom: e.target.value })} />
+          <div className="grid grid-cols-3 gap-3">
+            <Input label="Price" inputMode="numeric" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+            <Select label="Currency" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value as "UZS" | "USD" })}>
+              <option value="UZS">UZS (so&apos;m)</option>
+              <option value="USD">USD ($)</option>
+            </Select>
             <Input label="Stock qty" inputMode="numeric" value={form.stockQty} onChange={(e) => setForm({ ...form, stockQty: e.target.value })} />
           </div>
           <Select label="Category" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>

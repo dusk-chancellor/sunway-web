@@ -17,8 +17,8 @@ export function Footer() {
           <h3 className="mb-3 text-sm font-semibold text-navy">{t("shop")}</h3>
           <ul className="space-y-2 text-sm text-muted">
             <li><Link href="/c/electronics" className="hover:text-navy">Electronics</Link></li>
-            <li><Link href="/c/home-kitchen" className="hover:text-navy">Home &amp; Kitchen</Link></li>
-            <li><Link href="/c/rack-shelves" className="hover:text-navy">Rack Shelves</Link></li>
+            <li><Link href="/c/home" className="hover:text-navy">Home &amp; Kitchen</Link></li>
+            <li><Link href="/c/fashion" className="hover:text-navy">Fashion</Link></li>
           </ul>
         </div>
         <div>

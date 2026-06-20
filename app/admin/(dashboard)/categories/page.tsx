@@ -68,11 +68,11 @@ export default function AdminCategoriesPage() {
           </button>
           <button
             onClick={() => {
-              if (c.productCount > 0) {
-                alert("Move or remove products before deleting this category.");
-                return;
-              }
-              if (confirm(`Remove "${c.name}"?`)) del.mutate(c.id);
+              const msg =
+                c.productCount > 0
+                  ? `Remove "${c.name}"? Its ${c.productCount} product(s) will become uncategorised.`
+                  : `Remove "${c.name}"?`;
+              if (confirm(msg)) del.mutate(c.id);
             }}
             aria-label={`Delete ${c.name}`}
             className="rounded-r-md p-2 text-muted hover:bg-bad-soft hover:text-bad"

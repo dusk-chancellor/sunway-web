@@ -6,7 +6,7 @@ export const moneyMinor = z
   .union([z.string(), z.number()])
   .transform((v) => BigInt(typeof v === "number" ? Math.round(v) : v));
 
-export const currency = z.literal("UZS");
+export const currency = z.enum(["UZS", "USD"]);
 
 /* ── Catalog ───────────────────────────────────────────────────────────── */
 export const productImageSchema = z.object({
@@ -105,7 +105,6 @@ export const userSchema = z.object({
   phone: z.string(),
   fullName: z.string(),
   email: z.string().nullable(),
-  dob: z.string().nullable(),
   role: z.enum(["customer", "sales_manager"]),
 });
 export type User = z.infer<typeof userSchema>;
@@ -189,6 +188,8 @@ export const orderSchema = z.object({
   id: z.string(),
   number: z.string(),
   status: orderStatus,
+  phone: z.string().optional().default(""),
+  customerName: z.string().optional().default(""),
   paymentMethod,
   paymentStatus,
   items: z.array(orderItemSchema),
@@ -261,6 +262,5 @@ export type AddressInput = z.infer<typeof addressInput>;
 export const profileInput = z.object({
   fullName: z.string().min(2),
   email: z.string().email().or(z.literal("")).optional(),
-  dob: z.string().optional(),
 });
 export type ProfileInput = z.infer<typeof profileInput>;

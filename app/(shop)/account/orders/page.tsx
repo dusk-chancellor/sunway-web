@@ -61,15 +61,21 @@ export default function OrdersPage() {
                   <Link href={`/orders/${o.number}/confirmation`} className="font-mono font-semibold text-navy hover:underline">{o.number}</Link>
                   <p className="text-xs text-muted">{formatDate(o.createdAt)}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <OrderStatusBadge status={o.status} />
-                  <PaymentStatusBadge status={o.paymentStatus} />
+                <div className="flex items-center gap-3">
+                  <span className="flex flex-col items-end gap-1">
+                    <span className="text-[10px] uppercase tracking-wide text-muted">{t("orderStatusLabel")}</span>
+                    <OrderStatusBadge status={o.status} />
+                  </span>
+                  <span className="flex flex-col items-end gap-1">
+                    <span className="text-[10px] uppercase tracking-wide text-muted">{t("paymentStatusLabel")}</span>
+                    <PaymentStatusBadge status={o.paymentStatus} />
+                  </span>
                 </div>
               </div>
               <div className="flex items-center justify-between pt-3">
                 <p className="text-sm text-muted">{o.items.length} {t("items")}</p>
                 <div className="flex items-center gap-4">
-                  <Money minor={o.totalMinor} className="font-display font-semibold text-navy" />
+                  <Money minor={o.totalMinor} currency={o.currency} className="font-display font-semibold text-navy" />
                   {o.status === "pending" && (
                     <Button size="sm" variant="outline" onClick={() => cancel.mutate(o.number)} disabled={cancel.isPending}>
                       {t("cancel")}

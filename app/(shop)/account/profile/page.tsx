@@ -19,19 +19,17 @@ export default function ProfilePage() {
   const deleteAddress = useDeleteAddress();
 
   const [name, setName] = useState("");
-  const [dob, setDob] = useState("");
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ fullName: "", region: "", city: "", street: "", apartment: "", postalCode: "" });
 
   useEffect(() => {
     if (user) {
       setName(user.fullName);
-      setDob(user.dob ?? "");
     }
   }, [user]);
 
   const saveProfile = async () => {
-    const updated = await updateProfile.mutateAsync({ fullName: name, dob: dob || undefined });
+    const updated = await updateProfile.mutateAsync({ fullName: name });
     setUser(updated);
   };
 
@@ -45,7 +43,6 @@ export default function ProfilePage() {
         street: form.street,
         apartment: form.apartment || undefined,
         postalCode: form.postalCode || undefined,
-        isDefault: !addresses?.length,
       },
     });
     setModal(false);
@@ -62,7 +59,6 @@ export default function ProfilePage() {
             <p className="mb-1.5 text-sm font-medium text-navy">{t("phoneLabel")}</p>
             <p className="text-sm text-muted">{user ? formatPhone(user.phone) : ""}</p>
           </div>
-          <Input label={t("dob")} name="dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
           <Button onClick={saveProfile} disabled={updateProfile.isPending}>{t("saved")}</Button>
         </div>
       </section>

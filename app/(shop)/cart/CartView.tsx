@@ -48,14 +48,14 @@ export function CartView() {
               <ProductImage src={item.imageUrl} alt={item.name} className="h-24 w-24 shrink-0 rounded-r-md border border-line" />
               <div className="flex flex-1 flex-col">
                 <Link href={`/p/${item.slug}`} className="font-medium text-navy hover:underline">{item.name}</Link>
-                <span className="mt-1 text-sm text-muted">{t("unitPrice")}: <Money minor={item.unitPriceMinor} /></span>
+                <span className="mt-1 text-sm text-muted">{t("unitPrice")}: <Money minor={item.unitPriceMinor} currency={cart.currency} /></span>
                 <div className="mt-auto flex items-center justify-between pt-3">
                   <QuantityStepper value={item.quantity} max={item.stockQty} onChange={(v) => update.mutate({ id: item.id, quantity: v })} />
                   <button onClick={() => remove.mutate(item.id)} className="text-sm text-bad hover:underline">{t("remove")}</button>
                 </div>
               </div>
               <div className="text-right">
-                <Money minor={item.lineTotalMinor} className="font-display font-semibold text-navy" />
+                <Money minor={item.lineTotalMinor} currency={cart.currency} className="font-display font-semibold text-navy" />
               </div>
             </li>
           ))}
@@ -65,7 +65,7 @@ export function CartView() {
           <h2 className="mb-4 font-display text-lg text-navy">{t("title")}</h2>
           <div className="flex items-center justify-between border-b border-line pb-3 text-sm">
             <span className="text-muted">{t("subtotal")}</span>
-            <Money minor={cart.subtotalMinor} className="font-medium text-navy" />
+            <Money minor={cart.subtotalMinor} currency={cart.currency} className="font-medium text-navy" />
           </div>
           <div className="flex items-center justify-between py-3 text-sm">
             <span className="text-muted">{t("shipping")}</span>

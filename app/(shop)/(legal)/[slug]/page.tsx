@@ -1,20 +1,29 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import DOMPurify from "isomorphic-dompurify";
-import { getPage } from "@/server/store";
+import { fetchPage } from "@/lib/api/resources/catalog";
+import type { StaticPage } from "@/lib/validation/schemas";
 
 const LEGAL_SLUGS = ["about", "contacts", "delivery", "terms", "privacy"];
 
+async function getLegalPage(slug: string): Promise<StaticPage | null> {
+  try {
+    return await fetchPage(slug);
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const page = getPage(slug);
+  const page = await getLegalPage(slug);
   return { title: page?.title ?? "Page" };
 }
 
 export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!LEGAL_SLUGS.includes(slug)) notFound();
-  const page = getPage(slug);
+  const page = await getLegalPage(slug);
   if (!page) notFound();
 
   // Editorial HTML is sanitized before rendering (only place we use

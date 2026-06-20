@@ -18,6 +18,13 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Shared across the (single) AuthProvider per page load. Refresh tokens rotate
+// on every use, so firing /auth/refresh twice — as React StrictMode does in dev
+// by double-invoking effects — makes the second call look like a replay and
+// revokes the whole session. Deduping to one in-flight promise keeps exactly
+// one bootstrap refresh per page load.
+let bootstrapPromise: ReturnType<typeof refreshApi> | null = null;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isReady, setReady] = useState(false);
@@ -25,7 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // On mount, attempt a silent refresh from the httpOnly cookie.
   useEffect(() => {
     let active = true;
-    refreshApi()
+    if (!bootstrapPromise) bootstrapPromise = refreshApi();
+    bootstrapPromise
       .then((res) => {
         if (!active) return;
         tokenStore.set(res.accessToken);

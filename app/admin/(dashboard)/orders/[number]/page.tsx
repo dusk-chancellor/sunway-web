@@ -14,13 +14,8 @@ import { OrderStatusBadge, PaymentStatusBadge } from "@/components/shared/Status
 import { formatDateTime } from "@/lib/format/date";
 import type { OrderStatus } from "@/lib/validation/schemas";
 
-const FLOW: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["confirmed", "cancelled"],
-  confirmed: ["in_delivery", "cancelled"],
-  in_delivery: ["delivered"],
-  delivered: [],
-  cancelled: [],
-};
+// The sales manager can move an order to any status at any point.
+const ALL_STATUSES: OrderStatus[] = ["pending", "confirmed", "in_delivery", "delivered", "cancelled"];
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ number: string }> }) {
   const { number } = use(params);
@@ -30,28 +25,22 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
 
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
   const [note, setNote] = useState("");
-  const [noteError, setNoteError] = useState<string | null>(null);
 
   if (isLoading || !order) {
     return <div className="grid place-items-center py-20"><Spinner className="h-6 w-6 text-navy" /></div>;
   }
 
-  const allowed = FLOW[order.status];
+  const allowed = ALL_STATUSES.filter((s) => s !== order.status);
   const orderNumber = order.number;
 
   function applyStatus() {
     if (!nextStatus) return;
-    if (!note.trim()) {
-      setNoteError("A note is required to change status.");
-      return;
-    }
     changeStatus.mutate(
       { number: orderNumber, status: nextStatus, note: note.trim() },
       {
         onSuccess: () => {
           setNextStatus("");
           setNote("");
-          setNoteError(null);
         },
       },
     );
@@ -131,6 +120,14 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
           </section>
 
           <section className="rounded-r-lg border border-line bg-white p-5">
+            <h2 className="mb-3 font-display text-navy">Customer</h2>
+            <div className="space-y-0.5 text-sm text-navy">
+              <p className="font-medium">{order.customerName || order.shippingAddress.fullName || "—"}</p>
+              <p className="text-muted">{order.phone || "—"}</p>
+            </div>
+          </section>
+
+          <section className="rounded-r-lg border border-line bg-white p-5">
             <h2 className="mb-3 font-display text-navy">Ship to</h2>
             <address className="space-y-0.5 text-sm not-italic text-navy">
               <p className="font-medium">{order.shippingAddress.fullName}</p>
@@ -154,7 +151,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
                 ))}
               </Select>
               <div className="mt-3">
-                <label htmlFor="status-note" className="mb-1.5 block text-sm font-medium text-navy">Note (required)</label>
+                <label htmlFor="status-note" className="mb-1.5 block text-sm font-medium text-navy">Note (optional)</label>
                 <textarea
                   id="status-note"
                   rows={2}
@@ -163,7 +160,6 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
                   className="w-full rounded-r-md border border-line bg-white px-3 py-2 text-sm text-navy outline-none focus-visible:ring-2 focus-visible:ring-navy/40"
                   placeholder="e.g. Customer confirmed by phone"
                 />
-                {noteError && <p className="mt-1 text-sm text-bad">{noteError}</p>}
               </div>
               <Button
                 size="sm"

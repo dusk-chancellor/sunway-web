@@ -54,8 +54,12 @@ export function CategoryView({ slug, name }: { slug: string; name: string }) {
             </h2>
             <p className="mb-2 text-sm font-medium text-navy">{t("priceRange")}</p>
             <div className="flex items-center gap-2">
-              <Input name="min" inputMode="numeric" placeholder={t("min")} value={minPrice} onChange={(e) => setMin(e.target.value)} />
-              <Input name="max" inputMode="numeric" placeholder={t("max")} value={maxPrice} onChange={(e) => setMax(e.target.value)} />
+              <div className="min-w-0 flex-1">
+                <Input name="min" className="w-full" inputMode="numeric" placeholder={t("min")} value={minPrice} onChange={(e) => setMin(e.target.value)} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Input name="max" className="w-full" inputMode="numeric" placeholder={t("max")} value={maxPrice} onChange={(e) => setMax(e.target.value)} />
+              </div>
             </div>
             <div className="mt-3 flex gap-2">
               <Button size="sm" onClick={apply}>{t("apply")}</Button>
