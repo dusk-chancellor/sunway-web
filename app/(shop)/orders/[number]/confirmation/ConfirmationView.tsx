@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format/date";
 
 export function ConfirmationView({ number }: { number: string }) {
   const t = useTranslations("confirmation");
+  const tc = useTranslations("cart");
   const { user } = useAuth();
   const { data: order, isLoading } = useOrder(number);
 
@@ -64,9 +65,9 @@ export function ConfirmationView({ number }: { number: string }) {
           ))}
         </ul>
         <div className="mt-4 space-y-1 border-t border-line pt-4 text-sm">
-          <div className="flex justify-between"><span className="text-muted">Subtotal</span><Money minor={order.subtotalMinor} currency={order.currency} className="text-navy" /></div>
-          <div className="flex justify-between"><span className="text-muted">Shipping ({order.shippingMethodName})</span><Money minor={order.shippingMinor} currency={order.currency} className="text-navy" /></div>
-          <div className="flex justify-between text-base font-semibold"><span className="text-navy">Total</span><Money minor={order.totalMinor} currency={order.currency} className="text-navy" /></div>
+          <div className="flex justify-between"><span className="text-muted">{tc("subtotal")}</span><Money minor={order.subtotalMinor} currency={order.currency} className="text-navy" /></div>
+          <div className="flex justify-between"><span className="text-muted">{tc("shipping")} ({order.shippingMethodName})</span><Money minor={order.shippingMinor} currency={order.currency} className="text-navy" /></div>
+          <div className="flex justify-between text-base font-semibold"><span className="text-navy">{tc("total")}</span><Money minor={order.totalMinor} currency={order.currency} className="text-navy" /></div>
         </div>
       </div>
 

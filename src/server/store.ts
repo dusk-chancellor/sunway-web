@@ -669,8 +669,7 @@ export function adminStats() {
   return {
     ordersTodayByStatus,
     lowStock,
-    revenueMtdMinor: m(revenueMtd),
-    currency: "UZS" as const,
+    revenueMtdByCurrency: { UZS: m(revenueMtd) },
     smsFailures: [] as Array<{ phone: string; error: string; at: string }>,
   };
 }

@@ -10,6 +10,7 @@ import { useCart } from "@/lib/cart/useCart";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useUI } from "@/stores/ui";
 import { ClientOnly } from "@/components/shared/ClientOnly";
+import { LocaleSwitcher } from "@/components/shared/LocaleSwitcher";
 
 export function Header() {
   const t = useTranslations("nav");
@@ -43,6 +44,7 @@ export function Header() {
           />
         </form>
         <nav className="ml-auto flex items-center gap-1">
+          <LocaleSwitcher className="mr-1 hidden text-navy sm:inline-flex" />
           <Link href="/search" className="md:hidden grid h-10 w-10 place-items-center rounded-r-md text-navy hover:bg-card" aria-label={t("catalog")}>
             <Search className="h-5 w-5" />
           </Link>

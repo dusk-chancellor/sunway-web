@@ -16,6 +16,7 @@ import {
   fetchAdminOrder,
   changeAdminOrderStatus,
   settleAdminCod,
+  markAdminOrderPaid,
   fetchAdminBanners,
   createAdminBanner,
   updateAdminBanner,
@@ -114,6 +115,19 @@ export function useSettleCod() {
       qc.invalidateQueries({ queryKey: ["admin", "order", number] });
       pushToast("Payment settled", "ok");
     },
+  });
+}
+export function useMarkPaid() {
+  const qc = useQueryClient();
+  const pushToast = useUI((s) => s.pushToast);
+  return useMutation({
+    mutationFn: (number: string) => markAdminOrderPaid(number),
+    onSuccess: (_d, number) => {
+      qc.invalidateQueries({ queryKey: ["admin", "order", number] });
+      qc.invalidateQueries({ queryKey: ["admin", "orders"] });
+      pushToast("Payment marked as successful", "ok");
+    },
+    onError: (e: Error) => pushToast(e.message, "bad"),
   });
 }
 

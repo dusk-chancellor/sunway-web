@@ -14,6 +14,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 
 export function CategoryView({ slug, name }: { slug: string; name: string }) {
   const t = useTranslations("category");
+  const tc = useTranslations("common");
+  const tn = useTranslations("nav");
   const [sort, setSort] = useState("newest");
   const [minPrice, setMin] = useState("");
   const [maxPrice, setMax] = useState("");
@@ -44,7 +46,7 @@ export function CategoryView({ slug, name }: { slug: string; name: string }) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: name }]} />
+      <Breadcrumbs items={[{ label: tn("home"), href: "/" }, { label: name }]} />
       <div className="mt-4 flex flex-col gap-6 md:flex-row">
         {/* Filters */}
         <aside className="w-full shrink-0 md:w-64">
@@ -97,11 +99,11 @@ export function CategoryView({ slug, name }: { slug: string; name: string }) {
               {data.totalPages > 1 && (
                 <div className="mt-8 flex items-center justify-center gap-2">
                   <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                    Prev
+                    {tc("prev")}
                   </Button>
                   <span className="text-sm text-muted">{page} / {data.totalPages}</span>
                   <Button variant="outline" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
-                    Next
+                    {tc("next")}
                   </Button>
                 </div>
               )}

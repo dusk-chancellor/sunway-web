@@ -8,6 +8,15 @@ export const moneyMinor = z
 
 export const currency = z.enum(["UZS", "USD"]);
 
+/* ── Translations ────────────────────────────────────────────────────────────
+   Optional per-locale field overrides: locale -> field -> value. The base
+   columns are the fallback; see localized() in lib/i18n/content.ts. */
+export const translations = z
+  .record(z.string(), z.record(z.string(), z.string()))
+  .nullish()
+  .transform((v) => v ?? {});
+export type Translations = Record<string, Record<string, string>>;
+
 /* ── Catalog ───────────────────────────────────────────────────────────── */
 export const productImageSchema = z.object({
   id: z.string(),
@@ -32,6 +41,7 @@ export const productSchema = z.object({
   images: z.array(productImageSchema),
   isActive: z.boolean(),
   createdAt: z.string(),
+  translations,
 });
 export type Product = z.infer<typeof productSchema>;
 export type ProductImage = z.infer<typeof productImageSchema>;
@@ -54,6 +64,7 @@ export const categorySchema = z.object({
   featured: z.boolean(),
   sortOrder: z.number(),
   isActive: z.boolean(),
+  translations,
 });
 export type Category = z.infer<typeof categorySchema>;
 
@@ -66,6 +77,7 @@ export const bannerSchema = z.object({
   imageUrl: z.string().nullable(),
   sortOrder: z.number(),
   active: z.boolean(),
+  translations,
 });
 export type Banner = z.infer<typeof bannerSchema>;
 
@@ -142,6 +154,7 @@ export const shippingMethodSchema = z.object({
   description: z.string(),
   priceMinor: moneyMinor,
   sortOrder: z.number(),
+  translations,
 });
 export type ShippingMethod = z.infer<typeof shippingMethodSchema>;
 
@@ -224,8 +237,8 @@ export const adminStatsSchema = z.object({
   lowStock: z.array(
     z.object({ id: z.string(), name: z.string(), stockQty: z.number() }),
   ),
-  revenueMtdMinor: moneyMinor,
-  currency,
+  // Paid revenue this month, kept separate per currency (UZS/USD never summed).
+  revenueMtdByCurrency: z.record(z.string(), moneyMinor).nullish().transform((v) => v ?? {}),
   smsFailures: z.array(
     z.object({ phone: z.string(), error: z.string(), at: z.string() }),
   ),

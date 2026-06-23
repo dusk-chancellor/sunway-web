@@ -8,18 +8,10 @@ export function Footer() {
   return (
     <footer className="mt-16 border-t border-line bg-white">
       <div className="hairline" />
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-3">
         <div className="md:col-span-1">
           <Logo />
           <p className="mt-3 max-w-xs text-sm text-muted">{t("blurb")}</p>
-        </div>
-        <div>
-          <h3 className="mb-3 text-sm font-semibold text-navy">{t("shop")}</h3>
-          <ul className="space-y-2 text-sm text-muted">
-            <li><Link href="/c/electronics" className="hover:text-navy">Electronics</Link></li>
-            <li><Link href="/c/home" className="hover:text-navy">Home &amp; Kitchen</Link></li>
-            <li><Link href="/c/fashion" className="hover:text-navy">Fashion</Link></li>
-          </ul>
         </div>
         <div>
           <h3 className="mb-3 text-sm font-semibold text-navy">{t("company")}</h3>

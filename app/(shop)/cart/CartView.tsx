@@ -32,7 +32,7 @@ export function CartView() {
           icon={<ShoppingCart className="h-10 w-10" />}
           title={t("empty")}
           hint={t("emptyHint")}
-          action={<Link href="/" className="inline-flex h-11 items-center rounded-r-md bg-navy px-6 text-sm font-medium text-white hover:bg-navy-2">Browse catalog</Link>}
+          action={<Link href="/" className="inline-flex h-11 items-center rounded-r-md bg-navy px-6 text-sm font-medium text-white hover:bg-navy-2">{t("browseCatalog")}</Link>}
         />
       </div>
     );

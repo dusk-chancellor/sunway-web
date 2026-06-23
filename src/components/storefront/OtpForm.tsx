@@ -42,7 +42,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
   const sendCode = async () => {
     setError(null);
     if (!isValidPhone(phone) || !e164) {
-      setError("Enter a valid phone number");
+      setError(t("invalidPhone"));
       return;
     }
     setBusy(true);
@@ -52,7 +52,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
       setStep("code");
       setCooldown(30);
     } catch (err) {
-      setError(err instanceof ServerError ? err.message : "Could not send code");
+      setError(err instanceof ServerError ? err.message : t("sendError"));
     } finally {
       setBusy(false);
     }
@@ -70,10 +70,10 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
         setStep("name");
         return;
       }
-      pushToast("Signed in", "ok");
+      pushToast(t("signedIn"), "ok");
       router.push(next);
     } catch (err) {
-      setError(err instanceof ServerError ? err.message : "Verification failed");
+      setError(err instanceof ServerError ? err.message : t("verifyError"));
     } finally {
       setBusy(false);
     }
@@ -82,17 +82,17 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
   const submitName = async () => {
     setError(null);
     if (fullName.trim().length < 2) {
-      setError("Please enter your name");
+      setError(t("nameRequired"));
       return;
     }
     setBusy(true);
     try {
       const updated = await updateProfile({ fullName: fullName.trim() });
       setUser(updated);
-      pushToast("Welcome to Sunway", "ok");
+      pushToast(t("welcome"), "ok");
       router.push(next);
     } catch (err) {
-      setError(err instanceof ServerError ? err.message : "Could not save your name");
+      setError(err instanceof ServerError ? err.message : t("saveNameError"));
     } finally {
       setBusy(false);
     }
@@ -159,7 +159,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
             <Input
               label={t("fullName")}
               name="fullName"
-              placeholder="Your name"
+              placeholder={t("namePlaceholder")}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               error={error ?? undefined}

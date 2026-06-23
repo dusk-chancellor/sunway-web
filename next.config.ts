@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
+  // Uploaded images live on the Go backend under /uploads/*. Proxy them through
+  // the web origin so <Image src="/uploads/..."> works in both dev and prod
+  // without baking the backend host into stored URLs.
+  async rewrites() {
+    const api = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+    const origin = api.replace(/\/api\/v1\/?$/, "");
+    return [{ source: "/uploads/:path*", destination: `${origin}/uploads/:path*` }];
+  },
   async headers() {
     return [
       {

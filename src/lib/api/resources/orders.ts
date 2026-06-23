@@ -2,7 +2,7 @@ import { apiFetch } from "../client";
 import { orderSchema, orderListSchema, type Order, type OrderList, type PaymentMethod } from "@/lib/validation/schemas";
 
 export interface PlaceOrderInput {
-  shippingAddressId: string;
+  shippingAddressId?: string; // omitted for pickup orders
   shippingMethodId: string;
   paymentMethod: PaymentMethod;
 }

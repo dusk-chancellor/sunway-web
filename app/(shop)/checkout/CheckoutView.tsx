@@ -3,7 +3,8 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { localized } from "@/lib/i18n/content";
 import { CreditCard, Banknote, Plus } from "lucide-react";
 import { useCart } from "@/lib/cart/useCart";
 import { useAddresses, useSaveAddress } from "@/lib/api/hooks/account";
@@ -34,6 +35,7 @@ function formatExpiry(value: string): string {
 
 export function CheckoutView() {
   const t = useTranslations("checkout");
+  const locale = useLocale();
   const router = useRouter();
   const queryClient = useQueryClient();
   const pushToast = useUI((s) => s.pushToast);
@@ -69,15 +71,19 @@ export function CheckoutView() {
     }
   }, [shippingMethods, selectedShipping]);
 
-  const shippingCost = useMemo(
-    () => shippingMethods?.find((s) => s.id === selectedShipping)?.priceMinor ?? 0n,
+  const selectedMethod = useMemo(
+    () => shippingMethods?.find((s) => s.id === selectedShipping),
     [shippingMethods, selectedShipping],
   );
+  // Pickup orders need no shipping address; everything else does.
+  const isPickup = (selectedMethod?.name ?? "").toLowerCase().includes("pickup");
+  const shippingCost = selectedMethod?.priceMinor ?? 0n;
   const total = useMemo(() => (cart?.subtotalMinor ?? 0n) + shippingCost, [cart, shippingCost]);
+  const cur = cart?.currency ?? "UZS";
 
   const canPlace =
-    Boolean(selectedAddress) &&
     Boolean(selectedShipping) &&
+    (isPickup || Boolean(selectedAddress)) &&
     Boolean(cart && cart.items.length > 0) &&
     (payment === "cod" ||
       (card.number.replace(/\s/g, "").length >= 12 && card.name && card.expiry.length === 5 && card.cvv.length >= 3));
@@ -100,12 +106,16 @@ export function CheckoutView() {
   };
 
   const onPlaceOrder = async () => {
-    if (!selectedAddress || !selectedShipping) return;
+    if (!selectedShipping || (!isPickup && !selectedAddress)) return;
     setPlacing(true);
     setStockError(null);
     try {
       const order = await placeOrder(
-        { shippingAddressId: selectedAddress, shippingMethodId: selectedShipping, paymentMethod: payment },
+        {
+          shippingAddressId: isPickup ? undefined : selectedAddress!,
+          shippingMethodId: selectedShipping,
+          paymentMethod: payment,
+        },
         idemKey.current,
       );
       // The backend emptied the cart in the checkout tx — drop the stale cache so
@@ -144,43 +154,7 @@ export function CheckoutView() {
             <p className="text-sm text-muted">{t("phone")}: <span className="font-medium text-navy">{user?.phone}</span></p>
           </section>
 
-          {/* Shipping address */}
-          <section className="rounded-r-lg border border-line bg-white p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-lg text-navy">{t("shippingAddress")}</h2>
-              <Button size="sm" variant="outline" onClick={() => setAddressModal(true)}>
-                <Plus className="h-4 w-4" /> {t("useNewAddress")}
-              </Button>
-            </div>
-            {addresses && addresses.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {addresses.map((a) => (
-                  <label
-                    key={a.id}
-                    className={cn(
-                      "cursor-pointer rounded-r-md border p-3 text-sm",
-                      selectedAddress === a.id ? "border-navy bg-navy-soft/40" : "border-line",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="address"
-                      className="sr-only"
-                      checked={selectedAddress === a.id}
-                      onChange={() => setSelectedAddress(a.id)}
-                    />
-                    <p className="font-medium text-navy">{a.fullName}</p>
-                    <p className="text-muted">{a.street}{a.apartment ? `, ${a.apartment}` : ""}</p>
-                    <p className="text-muted">{a.city}, {a.region}</p>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted">Add a delivery address to continue.</p>
-            )}
-          </section>
-
-          {/* Shipping method */}
+          {/* Shipping method — chosen first; delivery then reveals the address form. */}
           <section className="rounded-r-lg border border-line bg-white p-5">
             <h2 className="mb-3 font-display text-lg text-navy">{t("shippingMethod")}</h2>
             <div className="space-y-2">
@@ -195,15 +169,53 @@ export function CheckoutView() {
                   <span className="flex items-center gap-3">
                     <input type="radio" name="shipping" checked={selectedShipping === s.id} onChange={() => setSelectedShipping(s.id)} />
                     <span>
-                      <span className="font-medium text-navy">{s.name}</span>
-                      <span className="block text-muted">{s.description}</span>
+                      <span className="font-medium text-navy">{localized(s.translations, locale, "name", s.name)}</span>
+                      <span className="block text-muted">{localized(s.translations, locale, "description", s.description)}</span>
                     </span>
                   </span>
-                  <Money minor={s.priceMinor} className="font-medium text-navy" />
+                  <Money minor={s.priceMinor} currency={cur} className="font-medium text-navy" />
                 </label>
               ))}
             </div>
           </section>
+
+          {/* Shipping address — only for delivery (pickup needs none). */}
+          {!isPickup && (
+            <section className="rounded-r-lg border border-line bg-white p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="font-display text-lg text-navy">{t("shippingAddress")}</h2>
+                <Button size="sm" variant="outline" onClick={() => setAddressModal(true)}>
+                  <Plus className="h-4 w-4" /> {t("useNewAddress")}
+                </Button>
+              </div>
+              {addresses && addresses.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {addresses.map((a) => (
+                    <label
+                      key={a.id}
+                      className={cn(
+                        "cursor-pointer rounded-r-md border p-3 text-sm",
+                        selectedAddress === a.id ? "border-navy bg-navy-soft/40" : "border-line",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="address"
+                        className="sr-only"
+                        checked={selectedAddress === a.id}
+                        onChange={() => setSelectedAddress(a.id)}
+                      />
+                      <p className="font-medium text-navy">{a.fullName}</p>
+                      <p className="text-muted">{a.street}{a.apartment ? `, ${a.apartment}` : ""}</p>
+                      <p className="text-muted">{a.city}, {a.region}</p>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted">{t("addAddressHint")}</p>
+              )}
+            </section>
+          )}
 
           {/* Payment */}
           <section className="rounded-r-lg border border-line bg-white p-5">
@@ -248,15 +260,15 @@ export function CheckoutView() {
             {cart?.items.map((it) => (
               <li key={it.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="line-clamp-1 text-muted">{it.quantity}× {it.name}</span>
-                <Money minor={it.lineTotalMinor} className="shrink-0 text-navy" />
+                <Money minor={it.lineTotalMinor} currency={cur} className="shrink-0 text-navy" />
               </li>
             ))}
           </ul>
           <div className="space-y-2 border-t border-line pt-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted">{t("orderSummary")}</span><Money minor={cart?.subtotalMinor ?? 0n} className="text-navy" /></div>
-            <div className="flex justify-between"><span className="text-muted">{t("shippingMethod")}</span><Money minor={shippingCost} className="text-navy" /></div>
+            <div className="flex justify-between"><span className="text-muted">{t("orderSummary")}</span><Money minor={cart?.subtotalMinor ?? 0n} currency={cur} className="text-navy" /></div>
+            <div className="flex justify-between"><span className="text-muted">{t("shippingMethod")}</span><Money minor={shippingCost} currency={cur} className="text-navy" /></div>
             <div className="flex justify-between border-t border-line pt-2 text-base font-semibold">
-              <span className="text-navy">Total</span><Money minor={total} className="text-navy" />
+              <span className="text-navy">{t("total")}</span><Money minor={total} currency={cur} className="text-navy" />
             </div>
           </div>
 

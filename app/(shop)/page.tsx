@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { ArrowRight } from "lucide-react";
 import { fetchBanners, fetchCategories, fetchProducts } from "@/lib/api/resources/catalog";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { ProductImage } from "@/components/shared/ProductImage";
+import { HeroCarousel } from "@/components/storefront/HeroCarousel";
+import { localized } from "@/lib/i18n/content";
 
 // SSR: fetch from the Go API on the server so the home page is fully rendered
 // for SEO and first paint.
@@ -11,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const t = await getTranslations("home");
+  const locale = await getLocale();
 
   const [banners, categories, productList] = await Promise.all([
     fetchBanners(),
@@ -18,29 +21,11 @@ export default async function HomePage() {
     fetchProducts({ featured: true }),
   ]);
   const featured = productList.items.slice(0, 8);
-  const hero = banners[0];
 
   return (
     <div className="mx-auto max-w-7xl px-4">
-      {/* Hero */}
-      {hero && (
-        <section className="mt-6 overflow-hidden rounded-r-xl border border-line bg-gradient-to-br from-navy to-navy-2 text-white">
-          <div className="grid items-center gap-6 p-8 md:grid-cols-2 md:p-12">
-            <div className="flex flex-col gap-4">
-              <span className="w-fit rounded-full bg-yellow px-3 py-1 text-xs font-semibold text-navy">SUNWAY</span>
-              <h1 className="font-display text-3xl font-bold leading-tight text-white md:text-5xl">{hero.title}</h1>
-              <p className="max-w-md text-white/80">{hero.subtitle}</p>
-              <Link
-                href={hero.ctaHref}
-                className="mt-2 inline-flex h-12 w-fit items-center gap-2 rounded-r-md bg-yellow px-6 font-medium text-navy transition hover:bg-yellow-deep"
-              >
-                {hero.ctaLabel} <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="ph aspect-[4/3] rounded-r-lg" role="img" aria-label={hero.title} />
-          </div>
-        </section>
-      )}
+      {/* Hero carousel (auto-slides when more than one banner is active) */}
+      <HeroCarousel banners={banners} />
 
       {/* Featured categories */}
       <section className="mt-12">
@@ -54,9 +39,9 @@ export default async function HomePage() {
               href={`/c/${c.slug}`}
               className="group flex flex-col items-center gap-3 rounded-r-lg border border-line bg-white p-5 text-center shadow-brand transition hover:shadow-brand-2"
             >
-              <ProductImage src={c.imageUrl} alt={c.name} className="h-20 w-20 rounded-full" />
-              <span className="text-sm font-medium text-navy group-hover:underline">{c.name}</span>
-              <span className="text-xs text-muted">{c.productCount} items</span>
+              <ProductImage src={c.imageUrl} alt={localized(c.translations, locale, "name", c.name)} className="h-20 w-20 rounded-full" />
+              <span className="text-sm font-medium text-navy group-hover:underline">{localized(c.translations, locale, "name", c.name)}</span>
+              <span className="text-xs text-muted">{t("itemCount", { count: c.productCount })}</span>
             </Link>
           ))}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Heart, ShoppingCart } from "lucide-react";
 import { ProductImage } from "@/components/shared/ProductImage";
 import { Money } from "@/components/shared/Money";
@@ -10,11 +10,14 @@ import { useAddToCart } from "@/lib/cart/useCart";
 import { useToggleWishlist, useWishlist } from "@/lib/api/hooks/account";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Product } from "@/lib/validation/schemas";
+import { localized } from "@/lib/i18n/content";
 import { cn } from "@/lib/utils/cn";
 
 // NOTE: no star ratings anywhere — reviews/ratings are out of scope per spec.
 export function ProductCard({ product }: { product: Product }) {
   const t = useTranslations("product");
+  const locale = useLocale();
+  const name = localized(product.translations, locale, "name", product.name);
   const add = useAddToCart();
   const { isAuthenticated } = useAuth();
   const toggle = useToggleWishlist();
@@ -26,7 +29,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-r-lg border border-line bg-white shadow-brand transition-shadow hover:shadow-brand-2">
       <Link href={`/p/${product.slug}`} className="relative block aspect-square">
-        <ProductImage src={product.images.find((i) => i.isPrimary)?.url ?? null} alt={product.name} className="h-full w-full" />
+        <ProductImage src={product.images.find((i) => i.isPrimary)?.url ?? null} alt={name} className="h-full w-full" />
         {isAuthenticated && (
           <button
             type="button"
@@ -50,7 +53,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         <p className="text-xs uppercase tracking-wide text-muted">{product.categoryName}</p>
         <Link href={`/p/${product.slug}`} className="line-clamp-2 text-sm font-medium text-navy hover:underline">
-          {product.name}
+          {name}
         </Link>
         <div className="mt-auto flex items-end justify-between gap-2 pt-1">
           <div>

@@ -12,6 +12,7 @@ import {
   type OrderList,
   type Banner,
   type AdminStats,
+  type Translations,
 } from "@/lib/validation/schemas";
 import { z } from "zod";
 
@@ -34,6 +35,8 @@ export interface ProductUpsert {
   currency: "UZS" | "USD";
   stockQty: number;
   categoryId: string;
+  imageUrls: string[]; // first becomes the primary image
+  translations?: Translations;
   isActive: boolean;
 }
 export async function createAdminProduct(input: ProductUpsert): Promise<Product> {
@@ -53,6 +56,8 @@ export async function fetchAdminCategories(): Promise<Category[]> {
 }
 export interface CategoryUpsert {
   name: string;
+  imageUrl?: string;
+  translations?: Translations;
   featured: boolean;
   isActive: boolean;
 }
@@ -83,6 +88,11 @@ export async function changeAdminOrderStatus(number: string, status: string, not
 export async function settleAdminCod(number: string): Promise<Order> {
   return orderSchema.parse(await apiFetch(`/admin/orders/${number}/settle`, { method: "POST" }));
 }
+// Marks any unpaid order paid — used when a card charge is settled off the
+// e-store (by phone / in person), as well as for cash on delivery.
+export async function markAdminOrderPaid(number: string): Promise<Order> {
+  return orderSchema.parse(await apiFetch(`/admin/orders/${number}/mark-paid`, { method: "POST" }));
+}
 
 /* banners */
 export async function fetchAdminBanners(): Promise<Banner[]> {
@@ -94,6 +104,8 @@ export interface BannerUpsert {
   subtitle: string;
   ctaLabel: string;
   ctaHref: string;
+  imageUrl?: string;
+  translations?: Translations;
   active: boolean;
 }
 export async function createAdminBanner(input: BannerUpsert): Promise<Banner> {
