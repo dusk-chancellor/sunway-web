@@ -2,7 +2,9 @@ import { tokenStore } from "./token";
 import { ulid } from "@/lib/utils/ids";
 import { apiErrorSchema } from "@/lib/validation/schemas";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
+// The Go API base. NEXT_PUBLIC_API_URL must be set in every environment; the
+// fallback is the local dev backend (the in-app mock BFF was removed).
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
 export class ServerError extends Error {
   constructor(

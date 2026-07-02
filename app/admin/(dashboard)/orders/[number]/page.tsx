@@ -108,7 +108,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
           <section className="rounded-r-lg border border-line bg-white p-5">
             <h2 className="mb-3 font-display text-navy">{t("payment")}</h2>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted">{order.paymentMethod === "cod" ? tco("payCod") : tco("payCard")}</span>
+              <span className="text-muted">{tco(order.paymentMethod === "cod" ? "payCod" : order.paymentMethod === "click" ? "payClick" : "payPayme")}</span>
               <PaymentStatusBadge status={order.paymentStatus} />
             </div>
             {order.paymentStatus !== "paid" && order.paymentStatus !== "refunded" && (

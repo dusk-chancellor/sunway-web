@@ -138,7 +138,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               error={error ?? undefined}
-              hint={devCode ? `${t("devCodeHint")} (${devCode})` : t("devCodeHint")}
+              hint={devCode ? `${t("devCodeHint")} (${devCode})` : undefined}
             />
             <Button block disabled={busy || code.length < 4} onClick={verify}>
               {busy ? t("verifying") : t("verify")}

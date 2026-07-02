@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
   const { login, user, isReady } = useAuth();
 
   const [step, setStep] = useState<"phone" | "code">("phone");
-  const [phone, setPhone] = useState("+998901112233");
+  const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
             </>
           ) : (
             <>
-              <Input label="Code" name="code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} error={error ?? undefined} hint={devCode ? `Dev code: ${devCode}` : "Use 000000 in dev"} />
+              <Input label="Code" name="code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} error={error ?? undefined} hint={devCode ? `Dev code: ${devCode}` : undefined} />
               <Button block onClick={verify} disabled={busy || code.length < 4}>Verify</Button>
             </>
           )}

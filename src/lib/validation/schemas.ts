@@ -177,7 +177,10 @@ export const paymentStatus = z.enum([
 ]);
 export type PaymentStatus = z.infer<typeof paymentStatus>;
 
-export const paymentMethod = z.enum(["card", "cod"]);
+// Online gateways (payme/click) redirect to the provider's hosted page; cod is
+// settled on delivery. The backend returns paymentRedirectUrl for the online
+// methods, which the checkout follows.
+export const paymentMethod = z.enum(["payme", "click", "cod"]);
 export type PaymentMethod = z.infer<typeof paymentMethod>;
 
 export const orderItemSchema = z.object({

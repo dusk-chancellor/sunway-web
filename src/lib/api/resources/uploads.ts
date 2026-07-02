@@ -1,6 +1,6 @@
 import { tokenStore } from "../token";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
 export interface Media {
   url: string;

@@ -21,18 +21,6 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { cn } from "@/lib/utils/cn";
 import type { PaymentMethod } from "@/lib/validation/schemas";
 
-/** Group digits into 4s: "1234567812345678" → "1234 5678 1234 5678" (max 16). */
-function formatCardNumber(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 16);
-  return digits.replace(/(.{4})/g, "$1 ").trim();
-}
-/** Auto-insert the slash: "0131" → "01/31" (max MM/YY). */
-function formatExpiry(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-}
-
 export function CheckoutView() {
   const t = useTranslations("checkout");
   const locale = useLocale();
@@ -47,7 +35,7 @@ export function CheckoutView() {
 
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [selectedShipping, setSelectedShipping] = useState<string | null>(null);
-  const [payment, setPayment] = useState<PaymentMethod>("card");
+  const [payment, setPayment] = useState<PaymentMethod>("payme");
   const [placing, setPlacing] = useState(false);
   const [stockError, setStockError] = useState<string | null>(null);
   const [addressModal, setAddressModal] = useState(false);
@@ -57,8 +45,6 @@ export function CheckoutView() {
 
   // New-address form state
   const [form, setForm] = useState({ fullName: "", region: "", city: "", street: "", apartment: "", postalCode: "" });
-  // Card form (simple, never charged — demo only per project decision)
-  const [card, setCard] = useState({ number: "", name: "", expiry: "", cvv: "" });
 
   useEffect(() => {
     if (addresses && addresses.length > 0 && !selectedAddress) {
@@ -84,9 +70,7 @@ export function CheckoutView() {
   const canPlace =
     Boolean(selectedShipping) &&
     (isPickup || Boolean(selectedAddress)) &&
-    Boolean(cart && cart.items.length > 0) &&
-    (payment === "cod" ||
-      (card.number.replace(/\s/g, "").length >= 12 && card.name && card.expiry.length === 5 && card.cvv.length >= 3));
+    Boolean(cart && cart.items.length > 0);
 
   const submitAddress = async () => {
     const created = await saveAddress.mutateAsync({
@@ -122,6 +106,13 @@ export function CheckoutView() {
       // the header badge and cart page reflect it immediately.
       queryClient.setQueryData(["cart"], { items: [], subtotalMinor: 0n, currency: cart?.currency ?? "UZS", count: 0 });
       queryClient.invalidateQueries({ queryKey: ["cart"] });
+      // Online methods (payme/click) return a hosted-checkout URL — leave the
+      // site to pay; the order is confirmed by the provider's callback, never on
+      // return. COD has no redirect and goes straight to the confirmation page.
+      if (order.paymentRedirectUrl) {
+        window.location.href = order.paymentRedirectUrl;
+        return; // keep the spinner up while the browser navigates away
+      }
       router.push(`/orders/${order.number}/confirmation`);
     } catch (err) {
       if (err instanceof ServerError && err.code === "STOCK_CONFLICT") {
@@ -220,35 +211,36 @@ export function CheckoutView() {
           {/* Payment */}
           <section className="rounded-r-lg border border-line bg-white p-5">
             <h2 className="mb-3 font-display text-lg text-navy">{t("payment")}</h2>
-            <div className="mb-4 grid grid-cols-2 gap-3">
+            <div className="mb-4 grid grid-cols-3 gap-3">
               <button
                 type="button"
-                onClick={() => setPayment("card")}
-                className={cn("flex items-center gap-2 rounded-r-md border p-3 text-sm", payment === "card" ? "border-navy bg-navy-soft/40" : "border-line")}
+                onClick={() => setPayment("payme")}
+                className={cn("flex items-center justify-center gap-2 rounded-r-md border p-3 text-sm", payment === "payme" ? "border-navy bg-navy-soft/40" : "border-line")}
               >
-                <CreditCard className="h-4 w-4" /> {t("payCard")}
+                <CreditCard className="h-4 w-4" /> {t("payPayme")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPayment("click")}
+                className={cn("flex items-center justify-center gap-2 rounded-r-md border p-3 text-sm", payment === "click" ? "border-navy bg-navy-soft/40" : "border-line")}
+              >
+                <CreditCard className="h-4 w-4" /> {t("payClick")}
               </button>
               <button
                 type="button"
                 onClick={() => setPayment("cod")}
-                className={cn("flex items-center gap-2 rounded-r-md border p-3 text-sm", payment === "cod" ? "border-navy bg-navy-soft/40" : "border-line")}
+                className={cn("flex items-center justify-center gap-2 rounded-r-md border p-3 text-sm", payment === "cod" ? "border-navy bg-navy-soft/40" : "border-line")}
               >
                 <Banknote className="h-4 w-4" /> {t("payCod")}
               </button>
             </div>
 
-            {payment === "card" ? (
-              <div className="space-y-3">
-                <Input label={t("cardNumber")} name="cardNumber" inputMode="numeric" autoComplete="cc-number" placeholder="1234 5678 9123 4567" value={card.number} onChange={(e) => setCard({ ...card, number: formatCardNumber(e.target.value) })} />
-                <Input label={t("cardName")} name="cardName" autoComplete="cc-name" value={card.name} onChange={(e) => setCard({ ...card, name: e.target.value })} />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label={t("cardExpiry")} name="cardExpiry" inputMode="numeric" autoComplete="cc-exp" placeholder="01/31" value={card.expiry} onChange={(e) => setCard({ ...card, expiry: formatExpiry(e.target.value) })} />
-                  <Input label={t("cardCvv")} name="cardCvv" inputMode="numeric" autoComplete="cc-csc" placeholder="123" value={card.cvv} onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) })} />
-                </div>
-                <p className="rounded-r-md bg-warn-soft px-3 py-2 text-xs text-[#8a6a00]">{t("cardNotice")}</p>
-              </div>
-            ) : (
+            {payment === "cod" ? (
               <p className="rounded-r-md bg-card px-3 py-2 text-sm text-muted">{t("codNotice")}</p>
+            ) : (
+              <p className="rounded-r-md bg-card px-3 py-2 text-sm text-muted">
+                {t("redirectNotice", { provider: payment === "payme" ? t("payPayme") : t("payClick") })}
+              </p>
             )}
           </section>
         </div>
