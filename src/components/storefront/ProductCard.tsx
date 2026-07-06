@@ -29,7 +29,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-r-lg border border-line bg-white shadow-brand transition-shadow hover:shadow-brand-2">
       <Link href={`/p/${product.slug}`} className="relative block aspect-square">
-        <ProductImage src={product.images.find((i) => i.isPrimary)?.url ?? null} alt={name} className="h-full w-full" />
+        <ProductImage src={product.images.find((i) => i.isPrimary)?.url ?? null} alt={name} fit="contain" className="h-full w-full" />
         {isAuthenticated && (
           <button
             type="button"

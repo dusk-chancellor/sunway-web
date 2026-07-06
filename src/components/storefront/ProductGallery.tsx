@@ -41,10 +41,10 @@ export function ProductGallery({ images, alt }: { images: ProductImageT[]; alt: 
       <button
         type="button"
         onClick={() => setZoom(true)}
-        className="group relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-r-lg border border-line"
+        className="group relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-r-lg border border-line bg-white"
         aria-label="Zoom image"
       >
-        <Image src={current.url} alt={current.alt || alt} fill sizes="(max-width: 768px) 100vw, 50vw" unoptimized={noOpt(current.url)} className="object-cover" />
+        <Image src={current.url} alt={current.alt || alt} fill sizes="(max-width: 768px) 100vw, 50vw" unoptimized={noOpt(current.url)} className="object-contain" />
         <span className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center rounded-full bg-navy/70 text-white opacity-0 transition group-hover:opacity-100">
           <ZoomIn className="h-4 w-4" />
         </span>
@@ -60,11 +60,11 @@ export function ProductGallery({ images, alt }: { images: ProductImageT[]; alt: 
               aria-label={`View image ${i + 1}`}
               aria-current={i === active}
               className={cn(
-                "relative aspect-square overflow-hidden rounded-r-md border transition",
+                "relative aspect-square overflow-hidden rounded-r-md border bg-white transition",
                 i === active ? "border-navy ring-2 ring-navy/40" : "border-line hover:border-navy/40",
               )}
             >
-              <Image src={img.url} alt={img.alt || alt} fill sizes="100px" unoptimized={noOpt(img.url)} className="object-cover" />
+              <Image src={img.url} alt={img.alt || alt} fill sizes="100px" unoptimized={noOpt(img.url)} className="object-contain" />
             </button>
           ))}
         </div>

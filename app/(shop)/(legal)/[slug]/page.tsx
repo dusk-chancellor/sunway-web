@@ -1,14 +1,15 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { getLocale } from "next-intl/server";
 import DOMPurify from "isomorphic-dompurify";
 import { fetchPage } from "@/lib/api/resources/catalog";
 import type { StaticPage } from "@/lib/validation/schemas";
 
 const LEGAL_SLUGS = ["about", "contacts", "delivery", "terms", "privacy"];
 
-async function getLegalPage(slug: string): Promise<StaticPage | null> {
+async function getLegalPage(slug: string, locale: string): Promise<StaticPage | null> {
   try {
-    return await fetchPage(slug);
+    return await fetchPage(slug, locale);
   } catch {
     return null;
   }
@@ -16,14 +17,16 @@ async function getLegalPage(slug: string): Promise<StaticPage | null> {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const page = await getLegalPage(slug);
+  const locale = await getLocale();
+  const page = await getLegalPage(slug, locale);
   return { title: page?.title ?? "Page" };
 }
 
 export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!LEGAL_SLUGS.includes(slug)) notFound();
-  const page = await getLegalPage(slug);
+  const locale = await getLocale();
+  const page = await getLegalPage(slug, locale);
   if (!page) notFound();
 
   // Editorial HTML is sanitized before rendering (only place we use

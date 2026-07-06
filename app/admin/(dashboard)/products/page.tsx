@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Money } from "@/components/shared/Money";
 import { Spinner } from "@/components/ui/Spinner";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { MarkdownTextarea } from "@/components/admin/MarkdownTextarea";
 import { TranslationsEditor } from "@/components/admin/TranslationsEditor";
 import type { Product, Translations } from "@/lib/validation/schemas";
 import { type ProductUpsert, fetchAdminProduct } from "@/lib/api/resources/admin";
@@ -189,12 +190,10 @@ export default function AdminProductsPage() {
           <Input label={t("name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <div>
             <label className="mb-1.5 block text-sm font-medium text-navy" htmlFor="p-desc">{t("description")}</label>
-            <textarea
+            <MarkdownTextarea
               id="p-desc"
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={3}
-              className="w-full rounded-r-md border border-line bg-white px-3 py-2 text-sm text-navy outline-none focus-visible:ring-2 focus-visible:ring-navy/40"
+              onChange={(v) => setForm({ ...form, description: v })}
             />
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -224,7 +223,7 @@ export default function AdminProductsPage() {
             onChange={(tr) => setForm({ ...form, translations: tr })}
             fields={[
               { key: "name", label: t("name") },
-              { key: "description", label: t("description"), textarea: true },
+              { key: "description", label: t("description"), markdown: true },
             ]}
           />
           <Checkbox label={t("activeHint")} checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />

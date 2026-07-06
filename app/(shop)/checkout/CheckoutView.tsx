@@ -13,6 +13,7 @@ import { placeOrder } from "@/lib/api/resources/orders";
 import { ServerError } from "@/lib/api/client";
 import { ulid } from "@/lib/utils/ids";
 import { Money } from "@/components/shared/Money";
+import { PaymeLogo, ClickLogo } from "@/components/shared/PaymentLogos";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -61,6 +62,7 @@ export function CheckoutView() {
     () => shippingMethods?.find((s) => s.id === selectedShipping),
     [shippingMethods, selectedShipping],
   );
+  const isOnline = payment === "payme" || payment === "click";
   // Pickup orders need no shipping address; everything else does.
   const isPickup = (selectedMethod?.name ?? "").toLowerCase().includes("pickup");
   const shippingCost = selectedMethod?.priceMinor ?? 0n;
@@ -208,32 +210,52 @@ export function CheckoutView() {
             </section>
           )}
 
-          {/* Payment */}
+          {/* Payment — a top-level choice of online vs cash; picking "online"
+              reveals the Payme/Click providers (each redirects to its hosted
+              page after the order is placed). */}
           <section className="rounded-r-lg border border-line bg-white p-5">
             <h2 className="mb-3 font-display text-lg text-navy">{t("payment")}</h2>
-            <div className="mb-4 grid grid-cols-3 gap-3">
+            <div className="mb-3 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setPayment("payme")}
-                className={cn("flex items-center justify-center gap-2 rounded-r-md border p-3 text-sm", payment === "payme" ? "border-navy bg-navy-soft/40" : "border-line")}
+                onClick={() => { if (!isOnline) setPayment("payme"); }}
+                aria-pressed={isOnline}
+                className={cn("flex items-center justify-center gap-2 rounded-r-md border p-3 text-sm", isOnline ? "border-navy bg-navy-soft/40" : "border-line")}
               >
-                <CreditCard className="h-4 w-4" /> {t("payPayme")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setPayment("click")}
-                className={cn("flex items-center justify-center gap-2 rounded-r-md border p-3 text-sm", payment === "click" ? "border-navy bg-navy-soft/40" : "border-line")}
-              >
-                <CreditCard className="h-4 w-4" /> {t("payClick")}
+                <CreditCard className="h-4 w-4" /> {t("payOnline")}
               </button>
               <button
                 type="button"
                 onClick={() => setPayment("cod")}
+                aria-pressed={payment === "cod"}
                 className={cn("flex items-center justify-center gap-2 rounded-r-md border p-3 text-sm", payment === "cod" ? "border-navy bg-navy-soft/40" : "border-line")}
               >
                 <Banknote className="h-4 w-4" /> {t("payCod")}
               </button>
             </div>
+
+            {isOnline && (
+              <div className="mb-3 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPayment("payme")}
+                  aria-pressed={payment === "payme"}
+                  aria-label={t("payPayme")}
+                  className={cn("flex items-center justify-center rounded-r-md border bg-white p-3", payment === "payme" ? "border-navy ring-2 ring-navy/30" : "border-line")}
+                >
+                  <PaymeLogo className="h-6 w-auto" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayment("click")}
+                  aria-pressed={payment === "click"}
+                  aria-label={t("payClick")}
+                  className={cn("flex items-center justify-center rounded-r-md border bg-white p-3", payment === "click" ? "border-navy ring-2 ring-navy/30" : "border-line")}
+                >
+                  <ClickLogo className="h-6 w-auto" />
+                </button>
+              </div>
+            )}
 
             {payment === "cod" ? (
               <p className="rounded-r-md bg-card px-3 py-2 text-sm text-muted">{t("codNotice")}</p>

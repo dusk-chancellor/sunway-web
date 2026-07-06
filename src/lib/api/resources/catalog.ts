@@ -54,8 +54,9 @@ export async function fetchBanners(): Promise<Banner[]> {
   const data = await apiFetch<{ items: unknown }>(`/banners`);
   return z.array(bannerSchema).parse(data.items);
 }
-export async function fetchPage(slug: string): Promise<StaticPage> {
-  return pageSchema.parse(await apiFetch(`/pages/${slug}`));
+export async function fetchPage(slug: string, locale?: string): Promise<StaticPage> {
+  const q = locale ? `?locale=${encodeURIComponent(locale)}` : "";
+  return pageSchema.parse(await apiFetch(`/pages/${slug}${q}`));
 }
 export async function fetchShippingMethods(): Promise<ShippingMethod[]> {
   const data = await apiFetch<{ items: unknown }>(`/shipping-methods`);

@@ -1,23 +1,54 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, RefreshCw } from "lucide-react";
 import { useOrder } from "@/lib/api/hooks/account";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Money } from "@/components/shared/Money";
+import { PaymeLogo, ClickLogo } from "@/components/shared/PaymentLogos";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/shared/StatusBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatDate } from "@/lib/format/date";
+import { retryOrderPayment } from "@/lib/api/resources/orders";
+import { useUI } from "@/stores/ui";
 
 export function ConfirmationView({ number }: { number: string }) {
   const t = useTranslations("confirmation");
   const tc = useTranslations("cart");
   const { user } = useAuth();
-  const { data: order, isLoading } = useOrder(number);
+  const { data: order, isLoading, refetch, isRefetching } = useOrder(number);
+  const pushToast = useUI((s) => s.pushToast);
+  const [paying, setPaying] = useState<null | "payme" | "click">(null);
 
   if (isLoading) return <div className="mx-auto max-w-3xl px-4 py-12"><Skeleton className="h-64 w-full" /></div>;
   if (!order) return null;
+
+  // An online order that's placed but not yet paid (customer abandoned or the
+  // card was declined and they bounced back here) can be retried with either
+  // provider — a fresh hosted-checkout redirect is issued on click.
+  const needsPayment =
+    order.status === "pending" &&
+    (order.paymentMethod === "payme" || order.paymentMethod === "click") &&
+    order.paymentStatus !== "paid" &&
+    order.paymentStatus !== "refunded";
+
+  const pay = async (method: "payme" | "click") => {
+    setPaying(method);
+    try {
+      const { paymentRedirectUrl } = await retryOrderPayment(order.number, method);
+      if (paymentRedirectUrl) {
+        window.location.href = paymentRedirectUrl;
+        return; // keep the spinner up while the browser navigates away
+      }
+      pushToast(t("retryError"), "bad");
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : t("retryError"), "bad");
+    } finally {
+      setPaying(null);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -44,6 +75,41 @@ export function ConfirmationView({ number }: { number: string }) {
             </span>
           </div>
         </div>
+
+        {needsPayment && (
+          <div className="mt-4 rounded-r-md border border-warn/40 bg-warn-soft/50 p-4">
+            <p className="font-medium text-navy">{t("paymentPending")}</p>
+            <p className="mt-1 text-sm text-muted">{t("paymentPendingHint")}</p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => pay("payme")}
+                disabled={paying !== null}
+                aria-label={t("payWith", { provider: "Payme" })}
+                className="flex items-center justify-center rounded-r-md border border-line bg-white p-3 transition hover:border-navy/40 disabled:opacity-60"
+              >
+                <PaymeLogo className="h-6 w-auto" />
+              </button>
+              <button
+                type="button"
+                onClick={() => pay("click")}
+                disabled={paying !== null}
+                aria-label={t("payWith", { provider: "Click" })}
+                className="flex items-center justify-center rounded-r-md border border-line bg-white p-3 transition hover:border-navy/40 disabled:opacity-60"
+              >
+                <ClickLogo className="h-6 w-auto" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isRefetching}
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-navy hover:underline disabled:opacity-60"
+            >
+              <RefreshCw className={isRefetching ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} /> {t("checkAgain")}
+            </button>
+          </div>
+        )}
 
         <dl className="grid grid-cols-2 gap-4 py-4 text-sm">
           <div><dt className="text-muted">{t("orderDate")}</dt><dd className="text-navy">{formatDate(order.createdAt)}</dd></div>

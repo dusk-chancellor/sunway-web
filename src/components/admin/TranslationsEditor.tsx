@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
+import { MarkdownTextarea } from "@/components/admin/MarkdownTextarea";
 import { enabledLocales, localeNames, defaultLocale, type Locale } from "@/i18n/config";
 import type { Translations } from "@/lib/validation/schemas";
 
@@ -11,6 +12,8 @@ export interface TranslatableField {
   key: string;
   label: string;
   textarea?: boolean;
+  /** Render a Markdown editor (Bold toolbar) instead of a plain textarea. */
+  markdown?: boolean;
 }
 
 /**
@@ -52,7 +55,12 @@ export function TranslationsEditor({
           ))}
         </Select>
         {fields.map((f) =>
-          f.textarea ? (
+          f.markdown ? (
+            <div key={f.key}>
+              <label className="mb-1.5 block text-sm font-medium text-navy">{f.label}</label>
+              <MarkdownTextarea value={current[f.key] ?? ""} onChange={(v) => setField(f.key, v)} />
+            </div>
+          ) : f.textarea ? (
             <div key={f.key}>
               <label className="mb-1.5 block text-sm font-medium text-navy">{f.label}</label>
               <textarea

@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
 import { Money } from "@/components/shared/Money";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { ProductGallery } from "@/components/storefront/ProductGallery";
+import { RichText } from "@/components/shared/RichText";
 import { localized } from "@/lib/i18n/content";
 import { ProductActions } from "./ProductActions";
 
@@ -76,7 +77,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <ProductActions product={product} />
           <div className="mt-4 border-t border-line pt-4">
             <h2 className="mb-2 font-display text-lg text-navy">{t("description")}</h2>
-            <p className="leading-relaxed text-muted">{description}</p>
+            <RichText text={description} className="text-muted" />
           </div>
         </div>
       </div>
