@@ -20,7 +20,7 @@ export class ServerError extends Error {
 
 let refreshing: Promise<boolean> | null = null;
 
-async function tryRefresh(): Promise<boolean> {
+export async function tryRefresh(): Promise<boolean> {
   if (!refreshing) {
     refreshing = fetch(`${BASE}/auth/refresh`, { method: "POST", credentials: "include" })
       .then(async (r) => {
