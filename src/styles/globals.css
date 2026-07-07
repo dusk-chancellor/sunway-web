@@ -17,7 +17,7 @@
   --color-line: #e7e8ee;
   --color-card: #f4f4f4;
   --color-card-2: #eeeff3;
-  --color-bg: #ffffff;
+  --color-bg: #f3f4f8;
   --color-ok: #2eae5a;
   --color-warn: #e2a100;
   --color-bad: #d9434a;
@@ -33,7 +33,7 @@
   --radius-r-lg: 20px;
   --radius-r-xl: 28px;
 
-  --shadow-brand: 0 4px 18px rgba(15, 24, 96, 0.06);
+  --shadow-brand: 0 4px 18px rgba(15, 24, 96, 0.08);
   --shadow-brand-2: 0 8px 28px rgba(15, 24, 96, 0.1);
 
   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
@@ -56,10 +56,35 @@
   body {
     margin: 0;
     padding: 0;
-    background: var(--color-bg);
     color: var(--color-ink);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* ==========================================================================
+     Sunway "sunburst" ambient background. Echoes the logo mark — a navy sun
+     with yellow rays — as a warm sunrise glowing in the top-right corner:
+       1. a bright yellow sun core,
+       2. faint navy rays radiating from that same point (repeating-conic),
+       3. a wide warm wash bleeding down from the top,
+       4. a cool navy pool in the opposite (bottom-left) corner to balance it.
+     Fixed attachment makes it read as an ambient sky while content scrolls
+     over it. All CSS gradients — no image request, no LCP cost.
+     ======================================================================== */
+  body {
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    background-image:
+      radial-gradient(34% 30% at 95% 2%, rgba(255, 212, 0, 0.72), rgba(255, 212, 0, 0) 62%),
+      repeating-conic-gradient(
+        from -16deg at 95% 2%,
+        rgba(15, 24, 96, 0.055) 0deg 2.4deg,
+        rgba(15, 24, 96, 0) 2.4deg 11deg
+      ),
+      radial-gradient(150% 78% at 100% -8%, rgba(255, 212, 0, 0.22), rgba(255, 212, 0, 0) 58%),
+      radial-gradient(95% 85% at -6% 106%, rgba(15, 24, 96, 0.08), rgba(15, 24, 96, 0) 55%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 
   h1,
