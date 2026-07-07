@@ -49,7 +49,10 @@ export function Modal({
       <div
         ref={ref}
         tabIndex={-1}
-        className={cn("relative z-10 w-full max-w-lg rounded-r-lg bg-white p-6 shadow-brand-2 outline-none", className)}
+        className={cn(
+          "relative z-10 flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-y-auto rounded-r-lg bg-white p-6 shadow-brand-2 outline-none",
+          className,
+        )}
       >
         {title && (
           <div className="mb-4 flex items-center justify-between">

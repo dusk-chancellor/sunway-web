@@ -17,3 +17,11 @@ export const localeNames: Record<Locale, string> = {
   ru: "Русский",
   uz: "O‘zbek",
 };
+
+// Country flag shown for each locale in the language switcher. Files live in
+// /public/flags — swap them for official artwork any time (keep the names).
+export const localeFlags: Record<Locale, string> = {
+  en: "/flags/us.svg",
+  ru: "/flags/ru.svg",
+  uz: "/flags/uz.svg",
+};
