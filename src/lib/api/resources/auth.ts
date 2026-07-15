@@ -1,9 +1,9 @@
 import { apiFetch } from "../client";
 import { authResultSchema, otpRequestResultSchema, userSchema, type AuthResult, type User } from "@/lib/validation/schemas";
 
-export async function requestOtp(phone: string, purpose = "login") {
+export async function requestOtp(phone: string, purpose = "login", locale?: string) {
   return otpRequestResultSchema.parse(
-    await apiFetch(`/auth/otp/request`, { method: "POST", body: { phone, purpose }, retryOnAuthFail: false }),
+    await apiFetch(`/auth/otp/request`, { method: "POST", body: { phone, purpose, locale }, retryOnAuthFail: false }),
   );
 }
 export async function verifyOtp(phone: string, code: string, fullName?: string): Promise<AuthResult> {

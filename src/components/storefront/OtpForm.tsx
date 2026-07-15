@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { requestOtp } from "@/lib/api/resources/auth";
 import { updateProfile } from "@/lib/api/resources/me";
 import { ServerError } from "@/lib/api/client";
@@ -15,6 +15,7 @@ import { useUI } from "@/stores/ui";
 
 export function OtpForm({ mode }: { mode: "login" | "register" }) {
   const t = useTranslations("auth");
+  const locale = useLocale();
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/account/profile";
@@ -47,7 +48,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
     }
     setBusy(true);
     try {
-      const res = await requestOtp(e164, mode);
+      const res = await requestOtp(e164, mode, locale);
       setDevCode(res.devCode ?? null);
       setStep("code");
       setCooldown(30);

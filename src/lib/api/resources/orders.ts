@@ -5,6 +5,7 @@ export interface PlaceOrderInput {
   shippingAddressId?: string; // omitted for pickup orders
   shippingMethodId: string;
   paymentMethod: PaymentMethod;
+  locale: string; // language for the delivery-notification SMS
 }
 
 export async function fetchOrders(): Promise<OrderList> {

@@ -101,6 +101,7 @@ export function CheckoutView() {
           shippingAddressId: isPickup ? undefined : selectedAddress!,
           shippingMethodId: selectedShipping,
           paymentMethod: payment,
+          locale,
         },
         idemKey.current,
       );
