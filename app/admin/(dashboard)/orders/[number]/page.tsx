@@ -13,16 +13,31 @@ import { Spinner } from "@/components/ui/Spinner";
 import { ProductImage } from "@/components/shared/ProductImage";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/shared/StatusBadge";
 import { formatDateTime } from "@/lib/format/date";
-import type { OrderStatus } from "@/lib/validation/schemas";
+import type { OrderStatus, PaymentMethod } from "@/lib/validation/schemas";
 
 // The sales manager can move an order to any status at any point.
 const ALL_STATUSES: OrderStatus[] = ["pending", "confirmed", "in_delivery", "delivered", "cancelled"];
+
+// Checkout owns the method labels; this maps a stored method onto its key.
+function paymentLabelKey(method: PaymentMethod): "payCod" | "payClick" | "payNasiya" | "payPayme" {
+  switch (method) {
+    case "cod":
+      return "payCod";
+    case "click":
+      return "payClick";
+    case "uzum_nasiya":
+      return "payNasiya";
+    default:
+      return "payPayme";
+  }
+}
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ number: string }> }) {
   const { number } = use(params);
   const t = useTranslations("admin");
   const tcart = useTranslations("cart");
   const tco = useTranslations("checkout");
+  const tn = useTranslations("nasiya");
   const ts = useTranslations("status");
   const { data: order, isLoading } = useAdminOrder(number);
   const changeStatus = useChangeOrderStatus();
@@ -80,7 +95,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
             </ul>
             <dl className="mt-4 space-y-1.5 border-t border-line pt-4 text-sm">
               <div className="flex justify-between"><dt className="text-muted">{tcart("subtotal")}</dt><dd><Money minor={order.subtotalMinor} currency={order.currency} /></dd></div>
-              <div className="flex justify-between"><dt className="text-muted">{tcart("shipping")} ({order.shippingMethodName})</dt><dd><Money minor={order.shippingMinor} currency={order.currency} /></dd></div>
+              {/* Only historical orders carry a shipping charge — the delivery
+                  fee is collected in cash by the courier now. */}
+              {order.shippingMinor > 0n && (
+                <div className="flex justify-between"><dt className="text-muted">{tcart("shipping")} ({order.shippingMethodName})</dt><dd><Money minor={order.shippingMinor} currency={order.currency} /></dd></div>
+              )}
               <div className="flex justify-between font-display text-base text-navy"><dt>{tcart("total")}</dt><dd><Money minor={order.totalMinor} currency={order.currency} /></dd></div>
             </dl>
           </section>
@@ -108,7 +127,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
           <section className="rounded-r-lg border border-line bg-white p-5">
             <h2 className="mb-3 font-display text-navy">{t("payment")}</h2>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted">{tco(order.paymentMethod === "cod" ? "payCod" : order.paymentMethod === "click" ? "payClick" : "payPayme")}</span>
+              <span className="text-muted">{tco(paymentLabelKey(order.paymentMethod))}</span>
               <PaymentStatusBadge status={order.paymentStatus} />
             </div>
             {order.paymentStatus !== "paid" && order.paymentStatus !== "refunded" && (
@@ -121,6 +140,36 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ num
               >
                 {markPaid.isPending ? t("saving") : t("markPaymentSuccess")}
               </Button>
+            )}
+
+            {/* The installment contract. `isSigned` means the customer signed in
+                Uzum's WebView — the order is only paid once the contract is
+                active, which is what the payment status above reflects. */}
+            {order.nasiya && (
+              <dl className="mt-4 space-y-1.5 border-t border-line pt-3 text-sm">
+                <div className="flex justify-between gap-2"><dt className="text-muted">{tn("state")}</dt><dd className="text-navy">{order.nasiya.state}</dd></div>
+                <div className="flex justify-between gap-2"><dt className="text-muted">{tn("plan")}</dt><dd className="text-navy">{order.nasiya.tariff}</dd></div>
+                {order.nasiya.monthlyMinor !== null && (
+                  <div className="flex justify-between gap-2"><dt className="text-muted">{tn("perMonth")}</dt><dd><Money minor={order.nasiya.monthlyMinor} currency={order.currency} /></dd></div>
+                )}
+                {order.nasiya.totalMinor !== null && (
+                  <div className="flex justify-between gap-2"><dt className="text-muted">{tn("totalWithMarkup")}</dt><dd><Money minor={order.nasiya.totalMinor} currency={order.currency} /></dd></div>
+                )}
+                <div className="flex justify-between gap-2"><dt className="text-muted">{tn("weReceive")}</dt><dd><Money minor={order.nasiya.originMinor} currency={order.currency} /></dd></div>
+                {order.nasiya.contractId !== null && (
+                  <div className="flex justify-between gap-2"><dt className="text-muted">{tn("contractNumber")}</dt><dd className="font-mono text-navy">{order.nasiya.contractId}</dd></div>
+                )}
+                {order.nasiya.providerRef !== null && (
+                  <div className="flex justify-between gap-2"><dt className="text-muted">{tn("providerRef")}</dt><dd className="font-mono text-navy">{order.nasiya.providerRef}</dd></div>
+                )}
+                <div className="flex justify-between gap-2"><dt className="text-muted">{tn("signed")}</dt><dd className="text-navy">{order.nasiya.isSigned ? "✓" : "—"}</dd></div>
+                {order.nasiya.customerName && (
+                  <div className="flex justify-between gap-2"><dt className="text-muted">{tn("borrower")}</dt><dd className="text-navy">{order.nasiya.customerName}</dd></div>
+                )}
+                {order.nasiya.actPdf && (
+                  <a href={order.nasiya.actPdf} target="_blank" rel="noreferrer" className="block pt-1 font-medium text-navy hover:underline">{tn("openAct")}</a>
+                )}
+              </dl>
             )}
           </section>
 

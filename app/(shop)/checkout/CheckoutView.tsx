@@ -10,17 +10,19 @@ import { useCart } from "@/lib/cart/useCart";
 import { useAddresses, useSaveAddress } from "@/lib/api/hooks/account";
 import { useShippingMethods } from "@/lib/api/hooks/catalog";
 import { placeOrder } from "@/lib/api/resources/orders";
+import { useNasiyaQuote } from "@/lib/api/hooks/nasiya";
 import { ServerError } from "@/lib/api/client";
 import { ulid } from "@/lib/utils/ids";
 import { Money } from "@/components/shared/Money";
-import { PaymeLogo, ClickLogo } from "@/components/shared/PaymentLogos";
+import { PaymeLogo, ClickLogo, UzumNasiyaLogo } from "@/components/shared/PaymentLogos";
+import { NasiyaPanel } from "@/components/storefront/NasiyaPanel";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { useUI } from "@/stores/ui";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { cn } from "@/lib/utils/cn";
-import type { PaymentMethod } from "@/lib/validation/schemas";
+import { isOnlineMethod, type PaymentMethod } from "@/lib/validation/schemas";
 
 export function CheckoutView() {
   const t = useTranslations("checkout");
@@ -37,6 +39,7 @@ export function CheckoutView() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [selectedShipping, setSelectedShipping] = useState<string | null>(null);
   const [payment, setPayment] = useState<PaymentMethod>("payme");
+  const [nasiyaTariff, setNasiyaTariff] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [stockError, setStockError] = useState<string | null>(null);
   const [addressModal, setAddressModal] = useState(false);
@@ -62,17 +65,31 @@ export function CheckoutView() {
     () => shippingMethods?.find((s) => s.id === selectedShipping),
     [shippingMethods, selectedShipping],
   );
-  const isOnline = payment === "payme" || payment === "click";
+  const isOnline = isOnlineMethod(payment);
+  const isNasiya = payment === "uzum_nasiya";
   // Pickup orders need no shipping address; everything else does.
   const isPickup = (selectedMethod?.name ?? "").toLowerCase().includes("pickup");
-  const shippingCost = selectedMethod?.priceMinor ?? 0n;
-  const total = useMemo(() => (cart?.subtotalMinor ?? 0n) + shippingCost, [cart, shippingCost]);
+  // The delivery fee is paid in cash to the courier and is not part of the
+  // order total — the total is the goods, and that is what every gateway
+  // charges (and what Uzum Nasiya finances).
+  const total = cart?.subtotalMinor ?? 0n;
   const cur = cart?.currency ?? "UZS";
+
+  // The quote prices the current cart, so it is keyed on the cart's contents:
+  // changing the cart must never leave a stale monthly payment on screen.
+  const cartKey = useMemo(
+    () => (cart?.items ?? []).map((i) => `${i.id}x${i.quantity}`).join(",") + `:${total}`,
+    [cart, total],
+  );
+  const nasiyaQuery = useNasiyaQuote(isNasiya && Boolean(cart?.items.length), cartKey);
 
   const canPlace =
     Boolean(selectedShipping) &&
     (isPickup || Boolean(selectedAddress)) &&
-    Boolean(cart && cart.items.length > 0);
+    Boolean(cart && cart.items.length > 0) &&
+    // Installments cannot be placed without a plan — the contract is written
+    // against exactly one tariff.
+    (!isNasiya || Boolean(nasiyaTariff));
 
   const submitAddress = async () => {
     const created = await saveAddress.mutateAsync({
@@ -102,6 +119,7 @@ export function CheckoutView() {
           shippingMethodId: selectedShipping,
           paymentMethod: payment,
           locale,
+          nasiyaTariff: isNasiya ? (nasiyaTariff ?? undefined) : undefined,
         },
         idemKey.current,
       );
@@ -109,9 +127,10 @@ export function CheckoutView() {
       // the header badge and cart page reflect it immediately.
       queryClient.setQueryData(["cart"], { items: [], subtotalMinor: 0n, currency: cart?.currency ?? "UZS", count: 0 });
       queryClient.invalidateQueries({ queryKey: ["cart"] });
-      // Online methods (payme/click) return a hosted-checkout URL — leave the
-      // site to pay; the order is confirmed by the provider's callback, never on
-      // return. COD has no redirect and goes straight to the confirmation page.
+      // Online methods return a hosted URL — leave the site to pay (or, for
+      // installments, to sign). The order is confirmed by the provider's
+      // callback or by our own confirmation call, never on return. COD has no
+      // redirect and goes straight to the confirmation page.
       if (order.paymentRedirectUrl) {
         window.location.href = order.paymentRedirectUrl;
         return; // keep the spinner up while the browser navigates away
@@ -167,10 +186,10 @@ export function CheckoutView() {
                       <span className="block text-muted">{localized(s.translations, locale, "description", s.description)}</span>
                     </span>
                   </span>
-                  <Money minor={s.priceMinor} currency={cur} className="font-medium text-navy" />
                 </label>
               ))}
             </div>
+            <p className="mt-3 rounded-r-md bg-card px-3 py-2 text-sm text-muted">{t("deliveryCashNotice")}</p>
           </section>
 
           {/* Shipping address — only for delivery (pickup needs none). */}
@@ -236,7 +255,9 @@ export function CheckoutView() {
             </div>
 
             {isOnline && (
-              <div className="mb-3 grid grid-cols-2 gap-3">
+              /* Two up on phones: three ~3:1 brand lockups side by side leave
+                 each logo about 70px of room, which is not enough to read. */
+              <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <button
                   type="button"
                   onClick={() => setPayment("payme")}
@@ -255,11 +276,31 @@ export function CheckoutView() {
                 >
                   <ClickLogo className="h-6 w-auto" />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setPayment("uzum_nasiya")}
+                  aria-pressed={isNasiya}
+                  aria-label={t("payNasiya")}
+                  className={cn("flex items-center justify-center rounded-r-md border bg-white p-3", isNasiya ? "border-navy ring-2 ring-navy/30" : "border-line")}
+                >
+                  <UzumNasiyaLogo className="h-6 w-auto" />
+                </button>
               </div>
             )}
 
             {payment === "cod" ? (
               <p className="rounded-r-md bg-card px-3 py-2 text-sm text-muted">{t("codNotice")}</p>
+            ) : isNasiya ? (
+              /* Installments qualify the customer before they can be chosen —
+                 eligibility and the monthly payment both come from Uzum. */
+              <NasiyaPanel
+                quote={nasiyaQuery.data}
+                isLoading={nasiyaQuery.isLoading}
+                error={nasiyaQuery.error as Error | null}
+                selected={nasiyaTariff}
+                onSelect={setNasiyaTariff}
+                currency={cur}
+              />
             ) : (
               <p className="rounded-r-md bg-card px-3 py-2 text-sm text-muted">
                 {t("redirectNotice", { provider: payment === "payme" ? t("payPayme") : t("payClick") })}
@@ -281,10 +322,12 @@ export function CheckoutView() {
           </ul>
           <div className="space-y-2 border-t border-line pt-3 text-sm">
             <div className="flex justify-between"><span className="text-muted">{t("orderSummary")}</span><Money minor={cart?.subtotalMinor ?? 0n} currency={cur} className="text-navy" /></div>
-            <div className="flex justify-between"><span className="text-muted">{t("shippingMethod")}</span><Money minor={shippingCost} currency={cur} className="text-navy" /></div>
             <div className="flex justify-between border-t border-line pt-2 text-base font-semibold">
               <span className="text-navy">{t("total")}</span><Money minor={total} currency={cur} className="text-navy" />
             </div>
+            {/* The delivery fee is settled in cash with the courier, so it is
+                deliberately absent from this total. */}
+            <p className="text-xs text-muted">{t("deliveryCashNotice")}</p>
           </div>
 
           {stockError && (

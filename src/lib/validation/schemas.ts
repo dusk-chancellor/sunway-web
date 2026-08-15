@@ -147,12 +147,14 @@ export const addressSchema = z.object({
 });
 export type Address = z.infer<typeof addressSchema>;
 
-/* ── Shipping ──────────────────────────────────────────────────────────── */
+/* ── Shipping ────────────────────────────────────────────────────────────
+   A delivery option carries no price: the fee is quoted and collected in cash
+   by the courier, for every payment method, so it never enters an order total
+   or a gateway charge. */
 export const shippingMethodSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  priceMinor: moneyMinor,
   sortOrder: z.number(),
   translations,
 });
@@ -177,11 +179,96 @@ export const paymentStatus = z.enum([
 ]);
 export type PaymentStatus = z.infer<typeof paymentStatus>;
 
-// Online gateways (payme/click) redirect to the provider's hosted page; cod is
-// settled on delivery. The backend returns paymentRedirectUrl for the online
-// methods, which the checkout follows.
-export const paymentMethod = z.enum(["payme", "click", "cod"]);
+// Online gateways redirect to the provider's hosted page; cod is settled on
+// delivery. The backend returns paymentRedirectUrl for the online methods,
+// which the checkout follows.
+//
+// uzum_nasiya is installments: the customer signs a credit contract with Uzum,
+// Uzum pays us, and the customer repays them monthly. It redirects like the
+// others, but the order only becomes paid once the backend has confirmed the
+// contract — returning from the WebView proves nothing.
+export const paymentMethod = z.enum(["payme", "click", "uzum_nasiya", "cod"]);
 export type PaymentMethod = z.infer<typeof paymentMethod>;
+
+// Online methods, in the order the checkout offers them.
+export const onlinePaymentMethods = ["payme", "click", "uzum_nasiya"] as const;
+export type OnlinePaymentMethod = (typeof onlinePaymentMethods)[number];
+export function isOnlineMethod(m: PaymentMethod): m is OnlinePaymentMethod {
+  return m !== "cod";
+}
+
+/* ── Installments (Uzum Nasiya) ──────────────────────────────────────────── */
+
+// What the customer may do next. "ready" is the only state with prices behind
+// it; "registration" opens Uzum's own WebView; "blocked" is a hard stop.
+export const nasiyaState = z.enum(["ready", "registration", "blocked"]);
+export type NasiyaState = z.infer<typeof nasiyaState>;
+
+// statusCode is Uzum's raw user status. It travels with the state so the UI can
+// name the exact missing document (5 = passport photo, 10 = selfie with
+// passport, 11 = residence page, 12 = contact person) instead of a generic
+// "finish registration".
+export const nasiyaBuyerSchema = z.object({
+  state: nasiyaState,
+  statusCode: z.number().int(),
+  webviewUrl: z.string(),
+  hasLimit: z.boolean(),
+  hasOverdueContracts: z.boolean(),
+  balanceMinor: moneyMinor,
+  periods: z.array(
+    z.object({
+      tariff: z.string(),
+      titleRu: z.string(),
+      titleUz: z.string(),
+      markupPercent: z.number().int(),
+    }),
+  ),
+});
+export type NasiyaBuyer = z.infer<typeof nasiyaBuyerSchema>;
+
+// One priced plan for the current cart. originMinor is what we receive;
+// totalMinor is what the customer repays in all.
+export const nasiyaTariffSchema = z.object({
+  tariff: z.string(),
+  periodMonths: z.number().int(),
+  titleRu: z.string(),
+  titleUz: z.string(),
+  monthlyMinor: moneyMinor,
+  totalMinor: moneyMinor,
+  originMinor: moneyMinor,
+  depositMinor: moneyMinor,
+  markupPercent: z.number().int(),
+  isAvailable: z.boolean(),
+  statusCode: z.number().int(),
+  errorMessage: z.string(),
+});
+export type NasiyaTariff = z.infer<typeof nasiyaTariffSchema>;
+
+export const nasiyaQuoteSchema = z.object({
+  buyer: nasiyaBuyerSchema,
+  tariffs: z.array(nasiyaTariffSchema),
+});
+export type NasiyaQuote = z.infer<typeof nasiyaQuoteSchema>;
+
+// The contract attached to an order. isSigned means the customer signed in the
+// WebView — NOT that the order is paid; paymentStatus is the authority there.
+export const nasiyaContractSchema = z.object({
+  state: z.string(),
+  tariff: z.string(),
+  periodMonths: z.number().int(),
+  monthlyMinor: moneyMinor.nullable(),
+  totalMinor: moneyMinor.nullable(),
+  originMinor: moneyMinor,
+  markupPercent: z.number().int().nullable(),
+  contractId: z.number().nullable(),
+  providerRef: z.number().nullable(),
+  contractStatus: z.number().int().nullable(),
+  isSigned: z.boolean(),
+  customerName: z.string(),
+  actPdf: z.string().nullable(),
+  signingUrl: z.string().nullable(),
+});
+export type NasiyaContract = z.infer<typeof nasiyaContractSchema>;
 
 export const orderItemSchema = z.object({
   id: z.string(),
@@ -219,6 +306,7 @@ export const orderSchema = z.object({
   createdAt: z.string(),
   estimatedDelivery: z.string().nullable(),
   paymentRedirectUrl: z.string().nullable(),
+  nasiya: nasiyaContractSchema.nullish(),
   timeline: z.array(orderTimelineNode),
 });
 export type Order = z.infer<typeof orderSchema>;
