@@ -132,7 +132,9 @@
     "stockChangedBody": "Stock or prices changed while you were checking out. Review the updated cart before continuing.",
     "updateCart": "Update cart",
     "payNasiya": "Uzum Nasiya",
-    "deliveryCashNotice": "The delivery fee is paid in cash to the courier."
+    "deliveryCashNotice": "Outside Tashkent, the delivery fee is paid in cash to the courier.",
+    "tashkentFree": "Free within Tashkent city",
+    "pickupManagerNotice": "Our manager will contact you after you place the order."
   },
   "nasiya": {
     "title": "Uzum Nasiya installments",

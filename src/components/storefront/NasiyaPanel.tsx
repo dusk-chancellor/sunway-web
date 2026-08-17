@@ -117,7 +117,6 @@ function PlanCard({
   onSelect: () => void;
 }) {
   const t = useTranslations("nasiya");
-  const title = locale === "uz" ? plan.titleUz : plan.titleRu;
   return (
     <button
       type="button"
@@ -131,7 +130,12 @@ function PlanCard({
       )}
     >
       <span className="flex items-baseline justify-between gap-2">
-        <span className="font-medium text-navy">{title || t("months", { count: plan.periodMonths })}</span>
+        {/* Uzum's own plan titles are unusable as headers: they exist only in
+            ru/uz, decline the month wrong ("12 Месяца"), some repeat the markup
+            that already sits to the right, and the 3-month one is named after
+            the internal scheme ("0-0-3"). The term is what the customer picks,
+            so it is rendered from periodMonths in their own language instead. */}
+        <span className="font-medium text-navy">{t("months", { count: plan.periodMonths })}</span>
         {plan.markupPercent > 0 && <span className="text-xs text-muted">+{plan.markupPercent}%</span>}
       </span>
       <span className="mt-1 block text-base font-semibold text-navy">

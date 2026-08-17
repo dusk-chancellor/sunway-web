@@ -29,6 +29,15 @@ reasoning behind these changes, see [`DECISIONS.md`](DECISIONS.md).
   than opening a second one.
 - Uzum's "over your limit" explanation is Russian-only, so it is shown to Russian
   readers and replaced with a translated line for everyone else.
+- **Installment plan headers are ours, not Uzum's.** Their titles exist only in
+  ru/uz (so English readers saw "Месяца"), decline the month wrong, repeat the
+  markup already shown to the right of the header, and name the 3-month plan
+  after the internal scheme ("0-0-3"). The header is now rendered from
+  `periodMonths` through the `nasiya.months` message in the reader's language.
+- Checkout shipping methods now carry the two facts that decide the choice and
+  are in neither method's description: delivery is free within the city of
+  Tashkent (badge), and pickup is followed up by a manager's call. The cash
+  notice narrowed to "outside Tashkent" and is hidden on pickup orders.
 
 ## 1.0.0 — Go backend integration & production readiness (2026-06 → 2026-07)
 

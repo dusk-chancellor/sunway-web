@@ -24,6 +24,12 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { cn } from "@/lib/utils/cn";
 import { isOnlineMethod, type PaymentMethod } from "@/lib/validation/schemas";
 
+// Which of the two shipping methods a row is. Matched on the untranslated
+// name, so it holds whatever language the customer is reading in.
+function isPickupMethod(name: string | undefined): boolean {
+  return (name ?? "").toLowerCase().includes("pickup");
+}
+
 export function CheckoutView() {
   const t = useTranslations("checkout");
   const locale = useLocale();
@@ -68,7 +74,7 @@ export function CheckoutView() {
   const isOnline = isOnlineMethod(payment);
   const isNasiya = payment === "uzum_nasiya";
   // Pickup orders need no shipping address; everything else does.
-  const isPickup = (selectedMethod?.name ?? "").toLowerCase().includes("pickup");
+  const isPickup = isPickupMethod(selectedMethod?.name);
   // The delivery fee is paid in cash to the courier and is not part of the
   // order total — the total is the goods, and that is what every gateway
   // charges (and what Uzum Nasiya finances).
@@ -171,25 +177,43 @@ export function CheckoutView() {
           <section className="rounded-r-lg border border-line bg-white p-5">
             <h2 className="mb-3 font-display text-lg text-navy">{t("shippingMethod")}</h2>
             <div className="space-y-2">
-              {shippingMethods?.map((s) => (
-                <label
-                  key={s.id}
-                  className={cn(
-                    "flex cursor-pointer items-center justify-between rounded-r-md border p-3 text-sm",
-                    selectedShipping === s.id ? "border-navy bg-navy-soft/40" : "border-line",
-                  )}
-                >
-                  <span className="flex items-center gap-3">
-                    <input type="radio" name="shipping" checked={selectedShipping === s.id} onChange={() => setSelectedShipping(s.id)} />
-                    <span>
-                      <span className="font-medium text-navy">{localized(s.translations, locale, "name", s.name)}</span>
-                      <span className="block text-muted">{localized(s.translations, locale, "description", s.description)}</span>
+              {shippingMethods?.map((s) => {
+                const pickup = isPickupMethod(s.name);
+                return (
+                  <label
+                    key={s.id}
+                    className={cn(
+                      "flex cursor-pointer items-center justify-between rounded-r-md border p-3 text-sm",
+                      selectedShipping === s.id ? "border-navy bg-navy-soft/40" : "border-line",
+                    )}
+                  >
+                    <span className="flex items-center gap-3">
+                      <input type="radio" name="shipping" checked={selectedShipping === s.id} onChange={() => setSelectedShipping(s.id)} />
+                      <span>
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-navy">{localized(s.translations, locale, "name", s.name)}</span>
+                          {/* The two facts that decide the method for most
+                              customers, and neither is in the method's own
+                              description: delivery inside the city costs
+                              nothing, and pickup is arranged by a call. */}
+                          {!pickup && (
+                            <span className="rounded-r-sm bg-ok-soft px-1.5 py-0.5 text-xs font-medium text-ok">
+                              {t("tashkentFree")}
+                            </span>
+                          )}
+                        </span>
+                        <span className="block text-muted">{localized(s.translations, locale, "description", s.description)}</span>
+                        {pickup && <span className="mt-1 block text-xs font-medium text-navy">{t("pickupManagerNotice")}</span>}
+                      </span>
                     </span>
-                  </span>
-                </label>
-              ))}
+                  </label>
+                );
+              })}
             </div>
-            <p className="mt-3 rounded-r-md bg-card px-3 py-2 text-sm text-muted">{t("deliveryCashNotice")}</p>
+            {/* Only about delivery, so it is out of the way when picking up. */}
+            {!isPickup && (
+              <p className="mt-3 rounded-r-md bg-card px-3 py-2 text-sm text-muted">{t("deliveryCashNotice")}</p>
+            )}
           </section>
 
           {/* Shipping address — only for delivery (pickup needs none). */}
@@ -326,8 +350,9 @@ export function CheckoutView() {
               <span className="text-navy">{t("total")}</span><Money minor={total} currency={cur} className="text-navy" />
             </div>
             {/* The delivery fee is settled in cash with the courier, so it is
-                deliberately absent from this total. */}
-            <p className="text-xs text-muted">{t("deliveryCashNotice")}</p>
+                deliberately absent from this total. Nothing to say about it on
+                a pickup order. */}
+            {!isPickup && <p className="text-xs text-muted">{t("deliveryCashNotice")}</p>}
           </div>
 
           {stockError && (

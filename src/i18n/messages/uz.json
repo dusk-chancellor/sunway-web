@@ -132,7 +132,9 @@
     "stockChangedBody": "Rasmiylashtirish vaqtida mavjudlik yoki narxlar o‘zgardi. Davom etishdan oldin yangilangan savatni ko‘rib chiqing.",
     "updateCart": "Savatni yangilash",
     "payNasiya": "Uzum Nasiya",
-    "deliveryCashNotice": "Yetkazib berish narxi kuryerga naqd pulda to‘lanadi."
+    "deliveryCashNotice": "Toshkent shahridan tashqarida yetkazib berish narxi kuryerga naqd pulda to‘lanadi.",
+    "tashkentFree": "Toshkent shahri bo‘ylab bepul",
+    "pickupManagerNotice": "Buyurtma rasmiylashtirilgandan so‘ng menejerimiz siz bilan bog‘lanadi."
   },
   "nasiya": {
     "title": "Uzum Nasiya bo‘lib to‘lash",
