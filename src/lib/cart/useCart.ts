@@ -3,12 +3,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchCart, addCartItem, patchCartItem, deleteCartItem } from "@/lib/api/resources/cart";
 import type { Cart } from "@/lib/validation/schemas";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { useUI } from "@/stores/ui";
 
 const CART_KEY = ["cart"] as const;
 
+// Waits for the auth bootstrap before fetching. The access token lives in
+// memory only, so on a cold page load it is empty until /auth/refresh returns.
+// GET /cart without it is a valid *guest* request — the API answers 200 with an
+// empty cart rather than 401, so there is no failure for the client to retry —
+// and that empty cart would be cached as the signed-in customer's own.
+// isLoading follows isPending so the disabled window still reads as loading
+// instead of briefly rendering an empty cart.
 export function useCart() {
-  return useQuery({ queryKey: CART_KEY, queryFn: fetchCart, staleTime: 30_000 });
+  const { isReady } = useAuth();
+  const query = useQuery({
+    queryKey: CART_KEY,
+    queryFn: fetchCart,
+    staleTime: 30_000,
+    enabled: isReady,
+  });
+  return { ...query, isLoading: query.isPending };
 }
 
 export function useAddToCart() {
