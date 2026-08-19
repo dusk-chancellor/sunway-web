@@ -15,8 +15,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const { isAuthenticated, isReady, logout } = useAuth();
 
   useEffect(() => {
-    if (isReady && !isAuthenticated) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-  }, [isReady, isAuthenticated, router, pathname]);
+    if (isReady && !isAuthenticated) router.replace("/login");
+  }, [isReady, isAuthenticated, router]);
 
   if (!isReady || !isAuthenticated) return null;
 

@@ -13,11 +13,11 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has(SESSION_COOKIE);
 
-  // Storefront protected routes → redirect to login with ?next=
+  // Storefront protected routes → login
   if (PROTECTED_PREFIXES.some((p) => pathname.startsWith(p)) && !hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

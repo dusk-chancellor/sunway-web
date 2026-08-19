@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { requestOtp } from "@/lib/api/resources/auth";
 import { updateProfile } from "@/lib/api/resources/me";
@@ -13,20 +12,9 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { isValidPhone, toE164, formatAsYouType } from "@/lib/format/phone";
 import { useUI } from "@/stores/ui";
 
-// Where to land once signed in. Only same-origin paths are honoured, so a
-// crafted ?next= cannot bounce the customer off to another site.
-function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) {
-    return "/account/profile";
-  }
-  return raw;
-}
-
 export function OtpForm({ mode }: { mode: "login" | "register" }) {
   const t = useTranslations("auth");
   const locale = useLocale();
-  const params = useSearchParams();
-  const next = safeNext(params.get("next"));
   const { login, setUser } = useAuth();
   const pushToast = useUI((s) => s.pushToast);
 
@@ -48,13 +36,12 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
 
   const e164 = toE164(phone);
 
-  // A real page load, not router.push(). The guest was bounced off /checkout to
-  // /login by the middleware, and Next keeps that redirect in its client router
-  // cache under the /checkout entry — a soft navigation would replay it and
-  // drop the customer back on this form. Reloading re-runs the middleware with
-  // the session cookie that login just set.
-  const goNext = () => {
-    window.location.assign(next);
+  // Signing in always lands on the profile, wherever the customer started.
+  // A real page load rather than router.push(): Next caches the middleware's
+  // guest redirect against a protected route, and a soft navigation there would
+  // replay it and strand the customer back on this form.
+  const goToAccount = () => {
+    window.location.assign("/account/profile");
   };
 
   const sendCode = async () => {
@@ -89,7 +76,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
         return;
       }
       pushToast(t("signedIn"), "ok");
-      goNext();
+      goToAccount();
     } catch (err) {
       setError(err instanceof ServerError ? err.message : t("verifyError"));
     } finally {
@@ -108,7 +95,7 @@ export function OtpForm({ mode }: { mode: "login" | "register" }) {
       const updated = await updateProfile({ fullName: fullName.trim() });
       setUser(updated);
       pushToast(t("welcome"), "ok");
-      goNext();
+      goToAccount();
     } catch (err) {
       setError(err instanceof ServerError ? err.message : t("saveNameError"));
     } finally {
