@@ -51,7 +51,7 @@ export default async function HomePage() {
       <section className="mt-14">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="font-display text-2xl text-navy">{t("featuredProducts")}</h2>
-          <Link href="/c/electronics" className="inline-flex items-center gap-1 text-sm font-medium text-navy hover:underline">
+          <Link href="/c/accumulators" className="inline-flex items-center gap-1 text-sm font-medium text-navy hover:underline">
             {t("viewAll")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
